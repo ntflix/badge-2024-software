@@ -1021,7 +1021,7 @@ per_pixel_\unique:
   .literal .LCcmath_eleven, cmath_eleven
 
   .align 4
-.include "sasppu_gen.S"
+.include "sasppu_gen.inc"
 
   .text
 

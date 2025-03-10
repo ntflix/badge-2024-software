@@ -124,7 +124,7 @@ def generate_per_pixel_jump_table(f):
     for ident in idents:
         f.write(".long " + ident+"\n")
 
-with open("sasppu_gen.S", "w") as f:
+with open("sasppu_gen.inc", "w") as f:
     generate_window_jump_table(f)
     generate_sprite_jump_table(f)
     generate_cmath_jump_table(f)
