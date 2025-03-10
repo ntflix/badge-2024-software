@@ -56,19 +56,17 @@ typedef struct
     mp_obj_base_t base;
     mp_int_t x;
     mp_int_t y;
-    mp_int_t width;
-    mp_int_t height;
-    mp_int_t graphics_x;
-    mp_int_t graphics_y;
-    mp_int_t windows;
-    mp_int_t flags;
-} mp_obj_sprite_t;
+    mp_uint_t width;
+    mp_uint_t height;
+    mp_uint_t graphics_x;
+    mp_uint_t graphics_y;
+    mp_uint_t windows;
+    mp_uint_t flags;
+} sasppu_sprite_t;
 
-mp_obj_full_type_t mp_type_sprite;
-
-static mp_obj_t sprite_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args_in)
+static mp_obj_t sasppu_sprite_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args_in)
 {
-    mp_obj_sprite_t *o = mp_obj_malloc(mp_obj_sprite_t, type);
+    sasppu_sprite_t *o = mp_obj_malloc(sasppu_sprite_t, type);
 
     return MP_OBJ_FROM_PTR(o);
 }
@@ -88,7 +86,7 @@ static mp_obj_t bg0_state_accessor(size_t n_args, const mp_obj_t *args)
 {
     if (n_args > 0)
     {
-        mp_obj_background_t *value = MP_OBJ_TO_PTR(args[0]);
+        sasppu_background_t *value = MP_OBJ_TO_PTR(args[0]);
         SASPPU_bg0_state.x = value->x;
         SASPPU_bg0_state.y = value->y;
         SASPPU_bg0_state.windows = value->windows;
@@ -97,7 +95,7 @@ static mp_obj_t bg0_state_accessor(size_t n_args, const mp_obj_t *args)
     }
     else
     {
-        mp_obj_background_t *value = MP_OBJ_TO_PTR(background_make_new((mp_obj_type_t *)&mp_type_background, 0, 0, NULL));
+        sasppu_background_t *value = MP_OBJ_TO_PTR(sasppu_background_make_new((mp_obj_type_t *)&sasppu_type_background, 0, 0, NULL));
         value->x = SASPPU_bg0_state.x;
         value->y = SASPPU_bg0_state.y;
         value->windows = SASPPU_bg0_state.windows;
@@ -111,7 +109,7 @@ static mp_obj_t bg1_state_accessor(size_t n_args, const mp_obj_t *args)
 {
     if (n_args > 0)
     {
-        mp_obj_background_t *value = MP_OBJ_TO_PTR(args[0]);
+        sasppu_background_t *value = MP_OBJ_TO_PTR(args[0]);
         SASPPU_bg1_state.x = value->x;
         SASPPU_bg1_state.y = value->y;
         SASPPU_bg1_state.windows = value->windows;
@@ -120,7 +118,7 @@ static mp_obj_t bg1_state_accessor(size_t n_args, const mp_obj_t *args)
     }
     else
     {
-        mp_obj_background_t *value = MP_OBJ_TO_PTR(background_make_new((mp_obj_type_t *)&mp_type_background, 0, 0, NULL));
+        sasppu_background_t *value = MP_OBJ_TO_PTR(sasppu_background_make_new((mp_obj_type_t *)&sasppu_type_background, 0, 0, NULL));
         value->x = SASPPU_bg1_state.x;
         value->y = SASPPU_bg1_state.y;
         value->windows = SASPPU_bg1_state.windows;
@@ -135,7 +133,7 @@ static mp_obj_t oam_accessor(size_t n_args, const mp_obj_t *args)
     if (n_args > 1)
     {
         mp_int_t index = mp_obj_get_int(args[0]);
-        mp_obj_sprite_t *value = MP_OBJ_TO_PTR(args[1]);
+        sasppu_sprite_t *value = MP_OBJ_TO_PTR(args[1]);
         SASPPU_oam[index].x = value->x;
         SASPPU_oam[index].y = value->y;
         SASPPU_oam[index].width = value->width;
@@ -149,7 +147,7 @@ static mp_obj_t oam_accessor(size_t n_args, const mp_obj_t *args)
     else
     {
         mp_int_t index = mp_obj_get_int(args[0]);
-        mp_obj_sprite_t *value = MP_OBJ_TO_PTR(sprite_make_new((mp_obj_type_t *)&mp_type_sprite, 0, 0, NULL));
+        sasppu_sprite_t *value = MP_OBJ_TO_PTR(sasppu_sprite_make_new((mp_obj_type_t *)&sasppu_type_sprite, 0, 0, NULL));
         value->x = SASPPU_oam[index].x;
         value->y = SASPPU_oam[index].y;
         value->width = SASPPU_oam[index].width;
