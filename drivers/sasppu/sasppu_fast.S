@@ -145,8 +145,10 @@ SASPPU_bg0:
 SASPPU_bg1:
   .zero (MAP_WIDTH * MAP_HEIGHT * 2)
 
-// 256kb allocation
-.align 16
+  // large allocations, allocated into PSRAM
+  .section .ext_ram.bss
+  .align 16
+
   .global SASPPU_background
   .type   SASPPU_background, @object
 SASPPU_background:
@@ -165,7 +167,7 @@ SASPPU_sprite_cache:
 SASPPU_frame_buffer:
   .zero ((240 * 240) * 2)
 
-.section .data.rel.ro
+.section .rodata
 
 .align 16
 vector_increments:
