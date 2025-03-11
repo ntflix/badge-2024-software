@@ -21,3 +21,18 @@ index 565f6feec..abca80a72 100644
      network_common.c
      network_lan.c
      network_ppp.c
+diff --git a/ports/esp32/mpconfigport.h b/ports/esp32/mpconfigport.h
+index e36d12bc0..7fff5a767 100644
+--- a/ports/esp32/mpconfigport.h
++++ b/ports/esp32/mpconfigport.h
+@@ -12,6 +12,10 @@
+ #include "driver/i2s_std.h"
+ #include "esp_wifi_types.h"
+ 
++#ifndef USB_SERIAL_JTAG_PACKET_SZ_BYTES
++#define USB_SERIAL_JTAG_PACKET_SZ_BYTES (64)
++#endif
++
+ #ifndef MICROPY_CONFIG_ROM_LEVEL
+ #define MICROPY_CONFIG_ROM_LEVEL            (MICROPY_CONFIG_ROM_LEVEL_EXTRA_FEATURES)
+ #endif
