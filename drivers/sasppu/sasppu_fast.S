@@ -138,6 +138,11 @@ SASPPU_oam:
   .zero (size_of_Sprite * SPRITE_COUNT)
   .global SASPPU_bg0
   .type   SASPPU_bg0, @object
+
+  .global SASPPU_sprite_cache
+  .type   SASPPU_sprite_cache, @object
+SASPPU_sprite_cache:
+  .zero (SPRITE_CACHE * 4)
 SASPPU_bg0:
   .zero (MAP_WIDTH * MAP_HEIGHT * 2)
   .global SASPPU_bg1
@@ -157,18 +162,14 @@ SASPPU_background:
   .type   SASPPU_sprites, @object
 SASPPU_sprites:
   .zero (SPR_WIDTH * SPR_HEIGHT * 2)
-  .global SASPPU_sprite_cache
-  .type   SASPPU_sprite_cache, @object
-SASPPU_sprite_cache:
-  .zero (SPRITE_CACHE * 4)
 
   .global SASPPU_frame_buffer
   .type   SASPPU_frame_buffer, @object
 SASPPU_frame_buffer:
   .zero ((240 * 240) * 2)
 
+// Constants
 .section .rodata
-
 .align 16
 vector_increments:
   .short 0

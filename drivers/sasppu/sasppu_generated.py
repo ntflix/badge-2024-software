@@ -2,6 +2,7 @@
 
 def generate_window_jump_table(f):
     idents = []
+    f.write(".text\n")
     f.write(".align 4\n")
     for subwin in range(16):
         for mainwin in range(16):
@@ -16,7 +17,8 @@ def generate_window_jump_table(f):
                     str(subwin) + ", " +
                     str(mainwin) +
                 "\n")
-                        
+
+    f.write(".data\n") 
     f.write(".align 4\n")
     f.write("window_jump_table:\n")
     for ident in idents:
@@ -24,6 +26,7 @@ def generate_window_jump_table(f):
 
 def generate_sprite_jump_table(f):
     idents = []
+    f.write(".text\n")
     f.write(".align 4\n")
     for double in range(2):
         for c_math in range(2):
@@ -45,7 +48,8 @@ def generate_sprite_jump_table(f):
                             str(flip_y) + ", " +
                             str(flip_x) + 
                         "\n")
-                        
+
+    f.write(".data\n")  
     f.write(".align 4\n")
     f.write("sprite_jump_table:\n")
     for ident in idents:
@@ -53,6 +57,7 @@ def generate_sprite_jump_table(f):
 
 def generate_cmath_jump_table(f):
     idents = []
+    f.write(".text\n")
     f.write(".align 4\n")
     for cmath_enable in range(2):
         for fade_enable in range(2):
@@ -86,7 +91,8 @@ def generate_cmath_jump_table(f):
                                             str(ms_double) + ", " +
                                             str(ms_half) +
                                         "\n")
-                        
+
+    f.write(".data\n")                   
     f.write(".align 4\n")
     f.write("cmath_jump_table:\n")
     for ident in idents:
@@ -94,6 +100,7 @@ def generate_cmath_jump_table(f):
 
 def generate_per_pixel_jump_table(f):
     idents = []
+    f.write(".text\n")
     f.write(".align 4\n")
     for cmath_enable in range(2):
         for bg1_enable in range(2):
@@ -118,7 +125,8 @@ def generate_per_pixel_jump_table(f):
                                 str(spr1_enable) + ", " +
                                 str(spr0_enable) +
                             "\n")
-                        
+
+    f.write(".data\n")                     
     f.write(".align 4\n")
     f.write("per_pixel_jump_table:\n")
     for ident in idents:
