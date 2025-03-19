@@ -163,11 +163,6 @@ SASPPU_background:
 SASPPU_sprites:
   .zero (SPR_WIDTH * SPR_HEIGHT * 2)
 
-  .global SASPPU_frame_buffer
-  .type   SASPPU_frame_buffer, @object
-SASPPU_frame_buffer:
-  .zero ((240 * 240) * 2)
-
 // Constants
 .section .rodata
 .align 16
@@ -1013,7 +1008,7 @@ per_pixel_\unique:
   .literal .LCbackground, SASPPU_background
   .literal .LCsprites, SASPPU_sprites
   .literal .LCsprite_cache, SASPPU_sprite_cache
-  .literal .LCframe_buffer, SASPPU_frame_buffer
+  .literal .LCframe_buffer, tildagon_fb
   .literal .LCvector_increments, vector_increments
   .literal .LCcmath_bit, cmath_bit
   .literal .LCcmath_mask_low, cmath_mask_low

@@ -161,18 +161,6 @@ static mp_obj_t oam_accessor(size_t n_args, const mp_obj_t *args)
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(oam_obj, 1, 2, oam_accessor);
 
-static mp_obj_t get_framebuffer(void)
-{
-    // Create a list holding all items from the framebuffer
-    mp_obj_list_t *lst = MP_OBJ_TO_PTR(mp_obj_new_list(MP_ARRAY_SIZE(SASPPU_frame_buffer), NULL));
-    for (int i = 0; i < MP_ARRAY_SIZE(SASPPU_frame_buffer); ++i)
-    {
-        lst->items[i] = mp_obj_new_int(SASPPU_frame_buffer[i]);
-    }
-    return MP_OBJ_FROM_PTR(lst);
-}
-static MP_DEFINE_CONST_FUN_OBJ_0(get_framebuffer_obj, get_framebuffer);
-
 static mp_obj_t render(void)
 {
     SASPPU_render();
@@ -222,8 +210,6 @@ static const mp_rom_map_elem_t sasppu_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg0_state), MP_ROM_PTR(&bg0_state_obj)},
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg1_state), MP_ROM_PTR(&bg1_state_obj)},
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_oam), MP_ROM_PTR(&oam_obj)},
-
-    {MP_ROM_QSTR(MP_QSTR_sasppuinteral_get_framebuffer), MP_ROM_PTR(&get_framebuffer_obj)},
 
     {MP_ROM_QSTR(MP_QSTR_BG_WIDTH_POWER), MP_ROM_INT(BG_WIDTH_POWER)},
     {MP_ROM_QSTR(MP_QSTR_BG_HEIGHT_POWER), MP_ROM_INT(BG_HEIGHT_POWER)},
