@@ -139,17 +139,18 @@ SASPPU_cmath_state_screen_fade:
 SASPPU_cmath_state_flags:
   .zero 1
 
-  .align 2
-  .global SASPPU_oam
-  .type   SASPPU_oam, @object
-SASPPU_oam:
-  .zero (size_of_Sprite * SPRITE_COUNT)
-
   .align 4
   .global SASPPU_sprite_cache
   .type   SASPPU_sprite_cache, @object
 SASPPU_sprite_cache:
   .zero (SPRITE_CACHE * 4 * 2)
+
+  .section .ext_ram.bss
+  .align 2
+  .global SASPPU_oam
+  .type   SASPPU_oam, @object
+SASPPU_oam:
+  .zero (size_of_Sprite * SPRITE_COUNT)
   
   .align 2
   .global SASPPU_bg0
@@ -162,7 +163,7 @@ SASPPU_bg1:
   .zero (MAP_WIDTH * MAP_HEIGHT * 2)
 
 // Constants
-.section .data
+.section .rodata
 .align 16
 vector_increments:
   .short 0
