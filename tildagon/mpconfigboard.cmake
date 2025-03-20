@@ -8,6 +8,7 @@ set(IDF_COMPONENTS
     flow3r_bmi270
     flow3r_bsp
     tildagon
+    sasppu
 )
 set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/../../../../../components/"

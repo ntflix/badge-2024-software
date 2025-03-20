@@ -11,7 +11,7 @@
 // size = 10, align = 2
   .struct 0
 Sprite:
-  .space 0
+  //.space 0
 Sprite.x:
   .space 2
 Sprite.y:
@@ -33,7 +33,7 @@ size_of_Sprite:
 // size = 6, align = 2
   .struct 0
 Background:
-  .space 0
+  //.space 0
 Background.scroll.x:
   .space 2
 Background.scroll.y:
@@ -98,51 +98,62 @@ SASPPU_main_state_subscreen_colour:
   .global SASPPU_main_state_window_1_left
   .type   SASPPU_main_state_window_1_left, @object
 SASPPU_main_state_window_1_left:
-  .zero 1
+  .zero 2
   .global SASPPU_main_state_window_1_right
   .type   SASPPU_main_state_window_1_right, @object
 SASPPU_main_state_window_1_right:
-  .zero 1
+  .zero 2
   .global SASPPU_main_state_window_2_left
   .type   SASPPU_main_state_window_2_left, @object
 SASPPU_main_state_window_2_left:
-  .zero 1
+  .zero 2
   .global SASPPU_main_state_window_2_right
   .type   SASPPU_main_state_window_2_right, @object
 SASPPU_main_state_window_2_right:
+  .zero 2
+  .global SASPPU_main_state_bgcol_windows
+  .type   SASPPU_main_state_bgcol_windows, @object
+SASPPU_main_state_bgcol_windows:
   .zero 1
   .global SASPPU_main_state_flags
   .type   SASPPU_main_state_flags, @object
 SASPPU_main_state_flags:
   .zero 1
+  .align 2
   .global SASPPU_bg0_state
   .type   SASPPU_bg0_state, @object
 SASPPU_bg0_state:
   .zero size_of_Background
   .global SASPPU_bg1_state
   .type   SASPPU_bg1_state, @object
+  .align 2
 SASPPU_bg1_state:
   .zero size_of_Background
   .global SASPPU_cmath_state_screen_fade
   .type   SASPPU_cmath_state_screen_fade, @object
+  .align 2
 SASPPU_cmath_state_screen_fade:
-  .zero 1
+  .zero 2
   .global SASPPU_cmath_state_flags
   .type   SASPPU_cmath_state_flags, @object
 SASPPU_cmath_state_flags:
   .zero 1
 
+  .align 2
   .global SASPPU_oam
   .type   SASPPU_oam, @object
 SASPPU_oam:
   .zero (size_of_Sprite * SPRITE_COUNT)
-  .global SASPPU_bg0
-  .type   SASPPU_bg0, @object
 
+  .align 4
   .global SASPPU_sprite_cache
   .type   SASPPU_sprite_cache, @object
 SASPPU_sprite_cache:
-  .zero (SPRITE_CACHE * 4)
+  .zero (SPRITE_CACHE * 4 * 2)
+  
+  .align 2
+  .global SASPPU_bg0
+  .type   SASPPU_bg0, @object
 SASPPU_bg0:
   .zero (MAP_WIDTH * MAP_HEIGHT * 2)
   .global SASPPU_bg1
@@ -150,21 +161,8 @@ SASPPU_bg0:
 SASPPU_bg1:
   .zero (MAP_WIDTH * MAP_HEIGHT * 2)
 
-  // large allocations, allocated into PSRAM
-  .section .ext_ram.bss
-  .align 16
-
-  .global SASPPU_background
-  .type   SASPPU_background, @object
-SASPPU_background:
-  .zero (BG_WIDTH * BG_HEIGHT * 2)
-  .global SASPPU_sprites
-  .type   SASPPU_sprites, @object
-SASPPU_sprites:
-  .zero (SPR_WIDTH * SPR_HEIGHT * 2)
-
 // Constants
-.section .rodata
+.section .data
 .align 16
 vector_increments:
   .short 0
@@ -185,6 +183,8 @@ cmath_mask_split:
   .short 0b1111100000000000
 cmath_one:
   .short 1
+cmath_two:
+  .short 2
 cmath_six:
   .short (1 << 6)
 cmath_eleven:
@@ -369,10 +369,11 @@ cmath_eleven:
 
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
+  ee.notq q6, q6
   window_macro_q6 \wincase
-  ee.andq q0, q0, q6
-  ee.andq q1, q1, q6
-  ee.andq q4, q4 ,q5
+  ee.andq q0, q0, q5
+  ee.andq q1, q1, q5
+  ee.andq q4, q4 ,q6
   ee.orq q0, q0, q4
   ee.orq q1, q1, q4
 .endm
@@ -384,9 +385,9 @@ cmath_eleven:
 .endif
 
   window_macro_q7 \wincase
-  ee.andq q0, q0, q6
-  ee.andq q5, q4 ,q5
-  ee.orq q0, q0, q5
+  ee.andq q0, q0, q5
+  ee.andq q6, q4 ,q6
+  ee.orq q0, q0, q6
 .endm
 
 // just the sub window
@@ -396,9 +397,9 @@ cmath_eleven:
 .endif
 
   window_macro_q7 \wincase
-  ee.andq q1, q1, q6
-  ee.andq q5, q4 ,q5
-  ee.orq q1, q1, q5
+  ee.andq q1, q1, q5
+  ee.andq q6, q4 ,q6
+  ee.orq q1, q1, q6
 .endm
 
 // Calculates the windows
@@ -410,21 +411,24 @@ cmath_eleven:
 .if \subwincase == 0
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
+  ee.notq q6, q6
   window_macro_q6 \mainwincase
-  ee.andq q0, q0, q6
-  ee.andq q4, q4 ,q5
+  ee.andq q0, q0, q5
+  ee.andq q4, q4 ,q6
   ee.orq q0, q0, q4
 .else
 .if \mainwincase == 0
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
+  ee.notq q6, q6
   window_macro_q6 \subwincase
-  ee.andq q1, q1, q6
-  ee.andq q4, q4 ,q5
+  ee.andq q1, q1, q5
+  ee.andq q4, q4 ,q6
   ee.orq q1, q1, q4
 .else
   ee.zero.q q7
   ee.vcmp.eq.s16 q7, q4, q7
+  ee.notq q7, q7
   window_macro_main \mainwincase
   window_macro_sub \subwincase
 .endif
@@ -434,8 +438,9 @@ cmath_eleven:
 .endm
 
 .macro window_wrapper subwincase, mainwincase
+  entry sp, 0+64
   window_macro \mainwincase, \subwincase
-  ret.n
+  retw.n
 .endm
 
 // void handle_bg( //a0 return, a1 stack
@@ -459,16 +464,17 @@ cmath_eleven:
   l16si  a12, a9, Background.scroll.y // load scroll.y
   add.n  a11, a11, a2 // x + scroll.x
   add.n  a12, a12, a3 // y + scroll.y
-  extui  a13, a11, 3, (MAP_HEIGHT_POWER) // x_pos_1
+  extui  a13, a11, 3, (MAP_WIDTH_POWER) // x_pos_1
   extui  a14, a12, 3, (MAP_HEIGHT_POWER) // y_pos
   addi.n a15, a13, 1 // x_pos_2
   slli  a14, a14, (MAP_WIDTH_POWER)
-  extui  a15, a15, 0, (MAP_HEIGHT_POWER) // x_pos_2
+  extui  a15, a15, 0, (MAP_WIDTH_POWER) // x_pos_2
   addx2  a10, a14, a10
   movi a14, 7
   addx2  a15, a15, a10
   and a11, a11, a14 // offset_x ((x + scroll.x) & 7)
-  wsr.sar  a11
+  slli a11, a11, 1
+  wur.sar_byte a11
   addx2  a13, a13, a10
   and a12, a12, a14 // offset_y ((y + scroll.y) & 7)
   l16ui a15, a15, 0 // bg0_2_map
@@ -476,22 +482,22 @@ cmath_eleven:
 
   l32r a9, .LCbackground
 .Ly_flip_1_\unique:
-  addi.n a10, a12, 0
+  mov.n a10, a12
   bbci.l a13, 1, .Lno_y_flip_1_\unique
   sub a10, a14, a10
 .Lno_y_flip_1_\unique:
-  slli a10, a10, (BG_WIDTH_POWER + 1)
-  addx2 a10, a13, a10
-  add.n a10, a9, a10
+  slli a10, a10, (BG_WIDTH_POWER)
+  add.n a10, a13, a10
+  addx2 a10, a10, a9
   ld.qr q4, a10, 0 // load bg0_1 (offset_y flip)
 .Ly_flip_2_\unique:
-  addi.n a10, a12, 0
+  mov.n a10, a12
   bbci.l a15, 1, .Lno_y_flip_2_\unique
   sub a10, a14, a10
 .Lno_y_flip_2_\unique:
-  slli a10, a10, (BG_WIDTH_POWER + 1)
-  addx2 a10, a15, a10
-  add.n a10, a9, a10
+  slli a10, a10, (BG_WIDTH_POWER)
+  add.n a10, a15, a10
+  addx2 a10, a10, a9
   ld.qr q5, a10, 0 // load bg0_1 (offset_y flip)
 
   bbci.l a13, 0, .Lno_x_flip_1_\unique
@@ -501,14 +507,18 @@ cmath_eleven:
   ee.vzip.16 q5, q4
   ee.vzip.16 q4, q5
   ee.vzip.16 q5, q4
-  j .Lno_x_flip_2_2_\unique
+  ee.src.q.ld.ip q7, a9, 0, q5, q4 // swimzleoo
+  mv.qr q4, q5
+  j .Lflip_end_\unique
 .Lno_x_flip_2_1_\unique:
   // flip just 1
   ee.vzip.16 q4, q6
   ee.vzip.16 q6, q4
   ee.vzip.16 q4, q6
   ee.vzip.16 q6, q4
-  j .Lno_x_flip_2_2_\unique
+  ee.src.q.ld.ip q7, a9, 0, q6, q5 // swimzleoo
+  mv.qr q4, q6
+  j .Lflip_end_\unique
 .Lno_x_flip_1_\unique:
   bbci.l a15, 0, .Lno_x_flip_2_2_\unique
   // flip just 2
@@ -516,8 +526,11 @@ cmath_eleven:
   ee.vzip.16 q6, q5
   ee.vzip.16 q5, q6
   ee.vzip.16 q6, q5
+  ee.src.q.ld.ip q7, a9, 0, q4, q6 // swimzleoo
+  j .Lflip_end_\unique
 .Lno_x_flip_2_2_\unique:
-  ee.src.q q4, q4, q5 // swimzleoo
+  ee.src.q.ld.ip q7, a9, 0, q4, q5 // swimzleoo
+.Lflip_end_\unique:
 
 .if \bgn == 0
   l32r  a9,  .LCbg0_state
@@ -527,29 +540,26 @@ cmath_eleven:
   l8ui  a15, a9, Background.flags
   bbci.l a15, 0, .Lno_cmath_\unique
   l32r a14, .LCcmath_bit
-  ee.vldbc.16 q5, a14
+  ee.vldbc.16.ip q5, a14, 0
   ee.orq q4, q4, q5 
 .Lno_cmath_\unique:
 .if \bgn == 0
-  callx0 a5
+  callx8 a5
 .else
-  callx0 a6
+  callx8 a6
 .endif
+  //mv.qr q0, q4
 .endm
 
 // void handle_sprite( //a0 return, a1 stack
   // uint8_t x, // a2
   // uint8_t y, // a3
-  // SpriteCaches *sprite_caches, // a4
-  // HandleBgType *handle_bg0, // a5
-  // HandleBgType *handle_bg1, // a6
-  // HandleCMathType *handle_cmath, // a7
-  // vector_increments, // a8
-  // Sprite *sprite, // a9
+  // Sprite *sprite, // a4
   //);
 .macro handle_sprite unique, double, c_math, flip_y, flip_x
-  l8ui a10, a9, Sprite.width
-  l16si a13, a9, Sprite.x
+  entry sp, 0+64
+  l8ui a10, a4, Sprite.width
+  l16si a13, a4, Sprite.x
 .if \double
   slli a10, a10, 1
 .endif
@@ -557,14 +567,14 @@ cmath_eleven:
   movi a12, -7
   blt a11, a12, .Lhandle_sprite_exit_\unique
   bge a11, a10, .Lhandle_sprite_exit_\unique
-  l16si a12, a9, Sprite.y
+  l16si a12, a4, Sprite.y
 .if \flip_x
   sub a11, a10, a11
   addi a11, a11, -1
 .endif
   sub a12, a3, a12 // offset_y = y - sprite.y;
 .if \flip_y
-  l8ui a10, a9, Sprite.height
+  l8ui a10, a4, Sprite.height
 .if \double
   slli a10, a10, 1
 .endif
@@ -587,43 +597,38 @@ cmath_eleven:
   addi a11, a10, 8 // x_pos_2
 .endif
 
+  addi.n a13, a13, -1
   extui a13, a13, 0, 3
   movi a14, 7
   sub a13, a14, a13 //offset
-  wsr.sar  a13
+  slli a13, a13, 1
+  wur.sar_byte a13
 
-  l8ui a14, a9, Sprite.width
+  slli a12, a12, SPR_WIDTH_POWER
+
+  l8ui a13, a4, Sprite.width
   ee.zero.q q4
-  bge a10, a14, .Lspr_1_end_\unique
+  bge a10, a13, .Lspr_1_end_\unique
   bltz a10, .Lspr_1_end_\unique
 
-  l8ui a14, a9, Sprite.graphics.y
-  add a14, a12, a14
-  slli a14, a14, (SPR_WIDTH_POWER + 4)
-  l8ui a15, a9, Sprite.graphics.x
-  addx8 a14, a14, a15
-  addx8 a14, a14, a15
-  addx2 a14, a14, a10
+  l16ui a15, a4, Sprite.graphics.x
+  add a14, a12, a15
+  add a14, a10, a14
   l32r a15, .LCsprites
-  add a14, a14, a15
+  addx2 a14, a14, a15
   ld.qr q4, a14, 0
 
 .Lspr_1_end_\unique:
 
-  l8ui a14, a9, Sprite.width
   ee.zero.q q5
-  bge a11, a14, .Lspr_2_end_\unique
+  bge a11, a13, .Lspr_2_end_\unique
   bltz a11, .Lspr_2_end_\unique
 
-  l8ui a14, a9, Sprite.graphics.y
-  add a14, a12, a14
-  slli a14, a14, (SPR_WIDTH_POWER + 4)
-  l8ui a15, a9, Sprite.graphics.x
-  addx8 a14, a14, a15
-  addx8 a14, a14, a15
-  addx2 a14, a14, a11
+  l16ui a15, a4, Sprite.graphics.x
+  add a14, a12, a15
+  add a14, a11, a14
   l32r a15, .LCsprites
-  add a14, a14, a15
+  addx2 a14, a14, a15
   ld.qr q5, a14, 0
 
 .Lspr_2_end_\unique:
@@ -659,42 +664,55 @@ cmath_eleven:
   ee.vzip.16 q5, q4
   ee.vzip.16 q4, q5
   ee.vzip.16 q5, q4
+  ee.src.q.ld.ip q7, a4, 0, q5, q4 // swimzleoo
+  mv.qr q4, q5
+.else
+  ee.src.q.ld.ip q7, a4, 0, q4, q5 // swimzleoo
 .endif
-
-  ee.src.q q4, q4, q5 // swimzleoo
 
 .if \c_math
   l32r a14, .LCcmath_bit
-  ee.vldbc.16 q5, a14
+  ee.vldbc.16.ip q5, a14, 0
   ee.orq q4, q4, q5 
 .endif
 
-  l8ui a15, a9, Sprite.windows
+  l8ui a15, a4, Sprite.windows
   l32r a14, .LCwindow_jump_table
   addx4 a14, a15, a14
   l32i.n a14, a14, 0
+  addi.n a14, a14, 3 // skip the entry call
   jx a14
   
 .Lhandle_sprite_exit_\unique:
-  ret.n
+  retw.n
 .endm
 
-.macro handle_spr_wrapper unique
-  movi a8, (SPRITE_CACHE - 1)
+.macro handle_spr_wrapper layer, unique
+.if \layer == 0
+  l32r a4, .LCsprite_cache_1
+.else
+  l32r a4, .LCsprite_cache_2
+.endif
+  mov.n a10, a2
+  mov.n a11, a3
 .Lspr_loop_\unique:
-  l32i.n a9, a4, 0
-  beqz a9, .Lspr_next_\unique
-  l8ui a14, a9, Sprite.flags
+  l32i.n a12, a4, 0
+  beqz a12, .Lspr_next_\unique
+  l8ui a14, a12, Sprite.flags
   movi a15, -4
-  l32r a10, .LCsprite_jump_table
+  l32r a13, .LCsprite_jump_table
   and a14, a15, a14
-  add a15, a14, a10
+  add a15, a14, a13
   l32i.n a15, a15, 0
-  callx0 a15
+  callx8 a15
 .Lspr_next_\unique:
   addi a4, a4, 4
-  addi a8, a8, -1
-  bgez a8, .Lspr_loop_\unique
+.if \layer == 0
+  l32r a8, .LCsprite_cache_2
+.else
+  l32r a8, .LCsprite_cache_end
+.endif
+  bltu a4, a8, .Lspr_loop_\unique
 .endm
 
 .macro colour_split_main
@@ -702,23 +720,26 @@ cmath_eleven:
   wsr.sar a15
   l32r a12, .LCcmath_six
   l32r a13, .LCcmath_eleven
+  l32r a14, .LCcmath_two
   l32r a11, .LCcmath_mask_split
-  ee.vldbc.16 q0, a12 // six
-  ee.vldbc.16 q1, a13 // eleven
-  ee.vldbc.16 q4, a11 // mask
-  ee.vmul.u16 q7, q2, q1 // blue
-  ee.vmul.u16 q6, q2, q0 // green
-  ee.vadds.s16 q5, q2, q2 // red
+  ee.vldbc.16.ip q2, a12, 0 // six
+  ee.vldbc.16.ip q3, a13, 0 // eleven
+  ee.vldbc.16.ip q4, a11, 0 // mask
+  ee.vldbc.16.ip q5, a14, 0 // two
+  ee.vmul.u16 q7, q0, q3 // blue
+  ee.vmul.u16 q6, q0, q2 // green
+  ee.vmul.u16 q5, q0, q5 // red
   ee.andq q6, q6, q4
   ee.andq q5, q5, q4
 .endm
 
 .macro colour_split_sub
-  ee.vmul.u16 q2, q3, q1 // blue
-  ee.vmul.u16 q1, q3, q0 // green
-  ee.vadds.s16 q0, q3, q3 // red
+  ee.vldbc.16.ip q0, a14, 0 // two
+  ee.vmul.u16 q3, q1, q3 // blue
+  ee.vmul.u16 q2, q1, q2 // green
+  ee.vmul.u16 q1, q1, q0 // red
+  ee.andq q2, q2, q4
   ee.andq q1, q1, q4
-  ee.andq q0, q0, q4
 .endm
 
 .macro colour_split_both
@@ -727,23 +748,27 @@ cmath_eleven:
 .endm
 
 .macro no_cmath_colour_shift
+  l32r a12, .LCcmath_two
   l32r a11, .LCcmath_mask_high
   l32r a10, .LCcmath_mask_low
-  ee.vldbc.16 q1, a11
-  ee.vldbc.16 q0, a10 
-  ee.andq q7, q2, q1
-  ee.andq q6, q2, q0
-  ee.vadds.s16 q5, q7, q7 //shl 1
+  ee.vldbc.16.ip q3, a12, 0
+  ee.vldbc.16.ip q2, a11, 0
+  ee.vldbc.16.ip q1, a10, 0
+  movi a12, 0
+  ee.andq q7, q0, q2
+  wsr.sar a12
+  ee.andq q6, q0, q1
+  ee.vmul.u16 q5, q7, q3 //shl 1
   ee.orq q0, q5, q6
 .endm
 
-.macro recombine_colour // assumes cmath_one in q3
+.macro recombine_colour // assumes cmath_one in q0
   movi a12, 5
   wsr.sar a12
   movi a12, 11
-  ee.vmul.u16 q6, q6, q3
+  ee.vmul.u16 q6, q6, q0
   wsr.sar a12
-  ee.vmul.u16 q7, q7, q3
+  ee.vmul.u16 q7, q7, q0
   ee.orq q0, q6, q5
   ee.orq q0, q0, q7
 .endm
@@ -754,22 +779,22 @@ cmath_eleven:
   ee.vadds.s16 \colb, \colb, \colb //shl 1
 .endm
 
-.macro halve_screen colr, colg, colb // assumes cmath_one in q3, 1 in SAR
-  ee.vmul.u16 \colr, \colr, q3 //shr 1
-  ee.vmul.u16 \colg, \colg, q3 //shr 1
-  ee.vmul.u16 \colb, \colb, q3 //shr 1
+.macro halve_screen colr, colg, colb // assumes cmath_one in q0, 1 in SAR
+  ee.vmul.u16 \colr, \colr, q0 //shr 1
+  ee.vmul.u16 \colg, \colg, q0 //shr 1
+  ee.vmul.u16 \colb, \colb, q0 //shr 1
 .endm
 
 .macro add_screens
-  ee.vadds.s16 q5, q5, q0
-  ee.vadds.s16 q6, q6, q1
-  ee.vadds.s16 q7, q7, q2
+  ee.vadds.s16 q5, q5, q1
+  ee.vadds.s16 q6, q6, q2
+  ee.vadds.s16 q7, q7, q3
 .endm
 
 .macro sub_screens
-  ee.vsubs.s16 q5, q5, q0
-  ee.vsubs.s16 q6, q6, q1
-  ee.vsubs.s16 q7, q7, q2
+  ee.vsubs.s16 q5, q5, q1
+  ee.vsubs.s16 q6, q6, q2
+  ee.vsubs.s16 q7, q7, q3
 .endm
 
 .macro handle_fade_only
@@ -778,11 +803,11 @@ cmath_eleven:
   wsr.sar a12
   l32r a13, .LCcmath_fade
   l32r a11, .LCcmath_one
-  ee.vldbc.16 q0, a13
-  ee.vldbc.16 q3, a11
-  ee.vmul.u16 q5, q5, q0
-  ee.vmul.u16 q6, q6, q0
-  ee.vmul.u16 q7, q7, q0
+  ee.vldbc.16.ip q3, a13, 0
+  ee.vldbc.16.ip q0, a11, 0
+  ee.vmul.u16 q5, q5, q3
+  ee.vmul.u16 q6, q6, q3
+  ee.vmul.u16 q7, q7, q3
   ee.andq q5, q5, q4
   ee.andq q6, q6, q4
   ee.andq q7, q7, q4
@@ -791,7 +816,7 @@ cmath_eleven:
 
 .macro handle_cmath_body sub_ss, add_ss, ss_double, ss_half, ms_double, ms_half
   l32r a11, .LCcmath_one
-  ee.vldbc.16 q3, a11
+  ee.vldbc.16.ip q0, a11, 0
 .if \ms_half || \ss_half // preload the halving constants
   movi a12, 1
   wsr.sar a12
@@ -806,11 +831,11 @@ cmath_eleven:
 .endif
 
 .if \ss_double
-  double_screen q0, q1, q2
+  double_screen q1, q2, q3
 .endif
 
 .if \ss_half
-  halve_screen q0, q1, q2
+  halve_screen q1, q2, q3
 .endif
 
 .if \add_ss
@@ -824,26 +849,37 @@ cmath_eleven:
 
 .macro handle_cmath_only sub_ss, add_ss, ss_double, ss_half, ms_double, ms_half
   ee.zero.q q7
-  ee.vcmp.lt.s16 q4, q2, q7 // less than zero means bit 15 set
+  ee.vcmp.lt.s16 q4, q0, q7 // less than zero means bit 15 set
   st.qr q4, sp, 0 // Ive run out of registers, so this is going to be sent to the stack for its crimes.
-  st.qr q2, sp, 16 // main_col_bak
   colour_split_both
+  st.qr q5, sp, 16 // main_r_bak
+  st.qr q6, sp, 32 // main_g_bak
+  st.qr q7, sp, 48 // main_b_bak
 
   handle_cmath_body \sub_ss, \add_ss, \ss_double, \ss_half, \ms_double, \ms_half
 
+  ld.qr q3, sp, 0 // use_cmath
+  ld.qr q0, sp, 16 // main_r_bak
+  ld.qr q1, sp, 32 // main_g_bak
+  ld.qr q2, sp, 48 // main_b_bak
+  ee.andq q5, q5, q3
+  ee.andq q6, q6, q3
+  ee.andq q7, q7, q3
+  ee.notq q3, q3
+  ee.andq q0, q0, q3
+  ee.andq q1, q1, q3
+  ee.andq q2, q2, q3
+  ee.orq q5, q5, q0
+  ee.orq q6, q6, q1
+  ee.orq q7, q7, q2
+  
+  ee.vldbc.16.ip q0, a11, 0
   recombine_colour
-
-  ld.qr q4, sp, 0 // use_cmath
-  ld.qr q1, sp, 16 // main_col_bak
-  ee.andq q0, q0, q4
-  ee.notq q4, q4
-  ee.andq q1, q1, q4
-  ee.orq q0, q1, q0
 .endm
 
 .macro handle_cmath_and_fade sub_ss, add_ss, ss_double, ss_half, ms_double, ms_half
   ee.zero.q q7
-  ee.vcmp.lt.s16 q4, q2, q7 // less than zero means bit 15 set
+  ee.vcmp.lt.s16 q4, q0, q7 // less than zero means bit 15 set
   st.qr q4, sp, 0 // Ive run out of registers, so this is going to be sent to the stack for its crimes.
   colour_split_both
   st.qr q5, sp, 16 // main_r_bak
@@ -870,8 +906,8 @@ cmath_eleven:
   movi a12, 8
   wsr.sar a12
   l32r a13, .LCcmath_fade
-  ee.vldbc.16 q0, a13
-  ee.vldbc.16 q3, a11
+  ee.vldbc.16.ip q3, a13, 0
+  ee.vldbc.16.ip q0, a11, 0
   ee.vmul.u16 q5, q5, q3
   ee.vmul.u16 q6, q6, q3
   ee.vmul.u16 q7, q7, q3
@@ -913,20 +949,19 @@ cmath_eleven:
 
 .macro handle_cmath_wrapper unique, cmath_enable, fade_enable, sub_ss, add_ss, ss_double, ss_half, ms_double, ms_half
   handle_cmath \unique, \cmath_enable, \fade_enable, \sub_ss, \add_ss, \ss_double, \ss_half, \ms_double, \ms_half
-  ret.n
+  retw.n
 .endm
 
 // void per_pixel( //a0 return, a1 stack
   // uint8_t x, // a2
   // uint8_t y, // a3
-  // SpriteCaches *sprite_caches, // a4
+  // SpriteCaches *handle_bgcol_window, // a4
   // HandleBgType *handle_bg0, // a5
   // HandleBgType *handle_bg1, // a6
   // HandleCMathType *handle_cmath, // a7
 //);
-.macro per_pixel_macro unique, cmath_enable, bg1_enable, bg0_enable, spr1_enable, spr0_enable
-  .align 4
-per_pixel_\unique:
+.macro per_pixel_macro unique, bgcol_window_enable, cmath_enable, bg1_enable, bg0_enable, spr1_enable, spr0_enable
+  entry sp, 64+64
   l32r a8, .LCvector_increments
   l32r a9, .LCmainscreen_colour
   l32r a10, .LCsubscreen_colour
@@ -935,19 +970,20 @@ per_pixel_\unique:
   l32r a13, .LCwindow_2_left
   l32r a14, .LCwindow_2_right
 
+  s32i.n a2, sp, 0
   ld.qr q0, a8, 0 // load increments
-  ee.vldbc.16 q1, a2 // broadcast x 
+  ee.vldbc.16.ip q1, sp, 0 // broadcast x 
   ee.vadds.s16 q0, q0, q1 // x_window
-  ee.vldbc.16 q2, a11 // load window_1_left
-  ee.vldbc.16 q3, a12 // load window_1_right
+  ee.vldbc.16.ip q2, a11, 0 // load window_1_left
+  ee.vldbc.16.ip q3, a12, 0 // load window_1_right
   ee.vcmp.eq.s16 q4, q0, q2
   ee.vcmp.gt.s16 q5, q0, q2
   ee.vcmp.eq.s16 q6, q0, q3
   ee.orq q4, q4, q5
   ee.vcmp.lt.s16 q5, q0, q3
-  ee.vldbc.16 q3, a13 // load window_2_left
+  ee.vldbc.16.ip q3, a13, 0 // load window_2_left
   ee.orq q5, q5, q6
-  ee.vldbc.16 q7, a14 // load window_2_right
+  ee.vldbc.16.ip q7, a14, 0 // load window_2_right
   ee.andq q2, q4, q5
   ee.vcmp.eq.s16 q4, q0, q3
   ee.vcmp.gt.s16 q5, q0, q3
@@ -955,10 +991,20 @@ per_pixel_\unique:
   ee.orq q4, q4, q5
   ee.vcmp.lt.s16 q5, q0, q7
   ee.vcmp.lt.s16 q5, q0, q7
-  ee.vldbc.16 q0, a9 // load main_col
+.if \bgcol_window_enable
+  ee.zero.q q0 // zero main_col
   ee.orq q5, q5, q6
-  ee.vldbc.16 q1, a10 // load sub_col
+  ee.vldbc.16.ip q1, a10, 0 // load sub_col
   ee.andq q3, q4, q5
+  ee.vldbc.16.ip q4, a9, 0 // load main_col
+
+  callx8 a4 // window calc
+.else
+  ee.vldbc.16.ip q0, a9, 0 // load main_col
+  ee.orq q5, q5, q6
+  ee.vldbc.16.ip q1, a10, 0 // load sub_col
+  ee.andq q3, q4, q5
+.endif
 
 .if \bg0_enable
   // handle bg0
@@ -967,7 +1013,7 @@ per_pixel_\unique:
 
 .if \spr0_enable
   // handle spr0
-  handle_spr_wrapper spr0_\unique
+  handle_spr_wrapper 0, spr0_\unique
 .endif
 
 .if \bg1_enable
@@ -977,7 +1023,7 @@ per_pixel_\unique:
 
 .if \spr1_enable
   // handle spr1
-  handle_spr_wrapper spr1_\unique
+  handle_spr_wrapper 1, spr1_\unique
 .endif
 
 .if \cmath_enable
@@ -985,9 +1031,8 @@ per_pixel_\unique:
   jx  a7
 .else
   no_cmath_colour_shift
-  ret.n
+  retw.n
 .endif
-  .size  per_pixel_\unique, .-per_pixel_\unique
 .endm
 
   .text
@@ -998,6 +1043,7 @@ per_pixel_\unique:
   .literal .LCwindow_1_right, SASPPU_main_state_window_1_right
   .literal .LCwindow_2_left, SASPPU_main_state_window_2_left
   .literal .LCwindow_2_right, SASPPU_main_state_window_2_right
+  .literal .LCbgcol_windows, SASPPU_main_state_bgcol_windows
   .literal .LCmain_state_flags, SASPPU_main_state_flags
   .literal .LCcmath_fade, SASPPU_cmath_state_screen_fade
   .literal .LCcmath_flags, SASPPU_cmath_state_flags
@@ -1007,7 +1053,9 @@ per_pixel_\unique:
   .literal .LCbg1, SASPPU_bg1
   .literal .LCbackground, SASPPU_background
   .literal .LCsprites, SASPPU_sprites
-  .literal .LCsprite_cache, SASPPU_sprite_cache
+  .literal .LCsprite_cache_1, SASPPU_sprite_cache 
+  .literal .LCsprite_cache_2, SASPPU_sprite_cache + (SPRITE_CACHE * 4)
+  .literal .LCsprite_cache_end, SASPPU_sprite_cache + (SPRITE_CACHE * 4 * 2)
   .literal .LCframe_buffer, tildagon_fb
   .literal .LCvector_increments, vector_increments
   .literal .LCcmath_bit, cmath_bit
@@ -1015,6 +1063,7 @@ per_pixel_\unique:
   .literal .LCcmath_mask_high, cmath_mask_high
   .literal .LCcmath_mask_split, cmath_mask_split
   .literal .LCcmath_one, cmath_one
+  .literal .LCcmath_two, cmath_two
   .literal .LCcmath_six, cmath_six
   .literal .LCcmath_eleven, cmath_eleven
 
@@ -1037,50 +1086,64 @@ per_pixel_\unique:
   // uint8_t y, // a3
 //);
 SASPPU_render_scanline:
-  entry sp, 64
+  entry sp, 0+64
 
-  l32r a0, .LCper_scanline
-  callx0 a0
+  l32r a4, .LCwindow_jump_table
 
-  l32r a14, .LCwindow_jump_table
+  l32r a5, .LCbg0_state
+  l8ui a5, a5, Background.windows
+  addx4 a5, a5, a4
+  l32i.n a13, a5, 0
 
-  l32r a15, .LCbg0_state
-  l8ui a15, a15, Background.windows
-  addx4 a15, a15, a14
-  l32i.n a5, a15, 0
+  l32r a5, .LCbg1_state
+  l8ui a5, a5, Background.windows
+  addx4 a5, a5, a4
+  l32i.n a14, a5, 0
 
-  l32r a15, .LCbg1_state
-  l8ui a15, a15, Background.windows
-  addx4 a15, a15, a14
-  l32i.n a6, a15, 0
+  l32r a5, .LCbgcol_windows
+  l8ui a5, a5, 0
+  addx4 a5, a5, a4
+  l32i.n a6, a5, 0
 
-  l32r a14, .LCcmath_jump_table
+  l32r a4, .LCcmath_jump_table
 
-  l32r a15, .LCcmath_flags
-  l8ui a15, a15, 0
-  addx4 a15, a15, a14
-  l32i.n a7, a15, 0
+  l32r a5, .LCcmath_flags
+  l8ui a5, a5, 0
+  addx4 a5, a5, a4
+  l32i.n a15, a5, 0
 
-  l32r a14, .LCper_pixel_jump_table
+  l32r a4, .LCper_pixel_jump_table
 
-  l32r a15, .LCmain_state_flags
-  l8ui a15, a15, 0
-  addx4 a15, a15, a14
-  l32i.n a0, a15, 0
+  l32r a5, .LCmain_state_flags
+  l8ui a5, a5, 0
+  addx4 a5, a5, a4
+  l32i.n a7, a5, 0
 
-  movi a2, (240 - 8)
+  mov.n a11, a3
+
+  movi a10, (240 - 8)
 .LCper_pixel_loop:
-  l32r a4, .LCsprite_cache
-  callx0 a0
+  mov.n a12, a6
+  callx8 a7
+  
+	slli  a4, a11, 4
+	sub	  a4, a4, a11
+	slli	a4, a4, 4
+	l32r	a5, .LCframe_buffer
+	add.n	a4, a4, a10
+	addx2	a4, a4, a5
+  st.qr q0, a4, 0
 
-  slli a14, a3, (SPR_WIDTH_POWER + 4)
-  addx8 a14, a14, a2
-  addx8 a14, a14, a2
-  l32r a15, .LCframe_buffer
-  add a14, a14, a15
-  st.qr q0, a14, 0
+  addi.n a10, a10, -8
+  bgez a10, .LCper_pixel_loop
+  
+  retw.n
 
-  addi.n a2, a2, -8
-  bgez a2, .LCper_pixel_loop
+	add.n	a4, a4, a10
+	addx2	a4, a4, a5
+  st.qr q0, a4, 0
 
+  addi.n a10, a10, -8
+  bgez a10, .LCper_pixel_loop
+  
   retw.n

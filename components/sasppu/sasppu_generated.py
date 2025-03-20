@@ -1,11 +1,13 @@
 #!/bin/python3
+import sys
 
 def generate_window_jump_table(f):
     idents = []
     f.write(".text\n")
-    f.write(".align 4\n")
     for subwin in range(16):
         for mainwin in range(16):
+            f.write(".literal_position\n")
+            f.write(".align 4\n")
             unique = ("handle_window_" +
                     str(subwin) + "_" +
                     str(mainwin)) 
@@ -27,11 +29,12 @@ def generate_window_jump_table(f):
 def generate_sprite_jump_table(f):
     idents = []
     f.write(".text\n")
-    f.write(".align 4\n")
     for double in range(2):
         for c_math in range(2):
             for flip_y in range(2):
                 for flip_x in range(2):
+                    f.write(".literal_position\n")
+                    f.write(".align 4\n")
                     unique = ("handle_sprite_" +
                             str(double) + "_" +
                             str(c_math) + "_" +
@@ -58,7 +61,6 @@ def generate_sprite_jump_table(f):
 def generate_cmath_jump_table(f):
     idents = []
     f.write(".text\n")
-    f.write(".align 4\n")
     for cmath_enable in range(2):
         for fade_enable in range(2):
             for sub_ss in range(2):
@@ -67,6 +69,8 @@ def generate_cmath_jump_table(f):
                         for ss_half in range(2):
                             for ms_double in range(2):
                                 for ms_half in range(2):
+                                    f.write(".literal_position\n")
+                                    f.write(".align 4\n")
                                     unique = ("handle_cmath_" +
                                             str(cmath_enable) + "_" +
                                             str(fade_enable) + "_" +
@@ -101,30 +105,34 @@ def generate_cmath_jump_table(f):
 def generate_per_pixel_jump_table(f):
     idents = []
     f.write(".text\n")
-    f.write(".align 4\n")
-    for cmath_enable in range(2):
-        for bg1_enable in range(2):
-            for bg0_enable in range(2):
-                for spr1_enable in range(2):
-                    for spr0_enable in range(2):
-                        unique = ("per_pixel_" +
-                                str(cmath_enable) + "_" +
-                                str(bg1_enable) + "_" +
-                                str(bg0_enable) + "_" +
-                                str(spr1_enable) + "_" +
-                                str(spr0_enable))
+    for bgcol_window_enable in range(2):
+        for cmath_enable in range(2):
+            for bg1_enable in range(2):
+                for bg0_enable in range(2):
+                    for spr1_enable in range(2):
+                        for spr0_enable in range(2):
+                            f.write(".literal_position\n")
+                            f.write(".align 4\n")
+                            unique = ("per_pixel_" +
+                                    str(bgcol_window_enable) + "_" +
+                                    str(cmath_enable) + "_" +
+                                    str(bg1_enable) + "_" +
+                                    str(bg0_enable) + "_" +
+                                    str(spr1_enable) + "_" +
+                                    str(spr0_enable))
 
-                        idents.append(unique)
+                            idents.append(unique)
 
-                        f.write(unique + ":\n")
-                        f.write("per_pixel_macro " + 
-                                unique + ", " +
-                                str(cmath_enable) + ", " +
-                                str(bg1_enable) + ", " +
-                                str(bg0_enable) + ", " +
-                                str(spr1_enable) + ", " +
-                                str(spr0_enable) +
-                            "\n")
+                            f.write(unique + ":\n")
+                            f.write("per_pixel_macro " + 
+                                    unique + ", " +
+                                    str(bgcol_window_enable) + ", " +
+                                    str(cmath_enable) + ", " +
+                                    str(bg1_enable) + ", " +
+                                    str(bg0_enable) + ", " +
+                                    str(spr1_enable) + ", " +
+                                    str(spr0_enable) +
+                                "\n")
 
     f.write(".data\n")                     
     f.write(".align 4\n")
@@ -132,7 +140,7 @@ def generate_per_pixel_jump_table(f):
     for ident in idents:
         f.write(".long " + ident+"\n")
 
-with open("sasppu_gen.inc", "w") as f:
+with open(sys.argv[1], "w") as f:
     generate_window_jump_table(f)
     generate_sprite_jump_table(f)
     generate_cmath_jump_table(f)
