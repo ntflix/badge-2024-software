@@ -14,9 +14,10 @@ EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[8][240];
 
 bool SASPPU_hdma_enable;
 
+// Defined in sasppu_fast.S
 void SASPPU_render_scanline(uint8_t y);
 
-void SASPPU_per_scanline(uint8_t y)
+static inline void SASPPU_per_scanline(uint8_t y)
 {
     if (SASPPU_hdma_enable)
     {
@@ -140,14 +141,15 @@ void SASPPU_per_scanline(uint8_t y)
     {
         SASPPU_sprite_cache[1][sprites_indcies[1]] = NULL;
     }
+
+    return SASPPU_render_scanline(y);
 }
 
-void SASPPU_render()
+void SASPPU_render(void)
 {
     // Screen is rendered top to bottom for sanity's sake
     for (int y = 0; y < 240; y++)
     {
         SASPPU_per_scanline(y);
-        SASPPU_render_scanline(y);
     }
 }

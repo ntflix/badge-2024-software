@@ -14,7 +14,6 @@ from system.scheduler.events import (
 from system.notification.events import ShowNotificationEvent
 
 from app import SASPPUApp
-from sasppu import sasppuinternal_render
 
 class _Scheduler:
     # Always receive all events
@@ -44,6 +43,9 @@ class _Scheduler:
         # To avoid re-rendering when not needed
         self.render_needed = asyncio.Event()
 
+        # A SASPPUApp has exclusive access to SASPPU
+        self.sasppu_lock = False
+
         # Bg/fg management events
         eventbus.on_async(
             RequestForegroundPushEvent, self._handle_request_foreground_push, self
@@ -56,6 +58,16 @@ class _Scheduler:
         eventbus.on_async(RequestStopAppEvent, self._handle_stop_app, self)
 
     async def _handle_start_app(self, event: RequestStartAppEvent):
+        if isinstance(event.app, SASPPUApp):
+            if self.sasppu_lock:
+                eventbus.emit(
+                    ShowNotificationEvent(
+                        message=f"SASPPU is locked"
+                    )
+                )
+                return
+            if event.app.lock_context:
+                self.sasppu_lock = True
         self.start_app(event.app, event.foreground)
         await self.start_update_tasks(event.app)
 
@@ -73,6 +85,9 @@ class _Scheduler:
 
     async def _handle_stop_app(self, event: RequestStopAppEvent):
         print(f"Stopping app: {event}")
+        if isinstance(event.app, SASPPUApp):
+            if event.app.lock_context:
+                self.sasppu_lock = False
         self.stop_app(event.app)
 
     def stop_app(self, app):
@@ -227,8 +242,7 @@ class _Scheduler:
                                     message=f"{app.__class__.__name__} has crashed"
                                 )
                             )
-                        sasppuinternal_render()
-                    display.flip_frame()
+                    display.flip_sasppu_frame()
                 else:
                     ctx = display.start_frame()
                     for app in self.foreground_stack[-1:] + self.on_top_stack:

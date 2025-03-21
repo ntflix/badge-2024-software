@@ -55,7 +55,7 @@ class App:
 class SASPPUApp(App):
     def __init__(self):
         super().__init__()
-        self.can_share_context = False
+        self.lock_context = True
 
     def draw(self):
         pass
