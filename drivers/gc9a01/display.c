@@ -91,7 +91,7 @@ static mp_obj_t flip_frame(mp_obj_t ctx)
     gfx_fps_update();
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(flip_frame_obj, end_fraflip_frameme);
+static MP_DEFINE_CONST_FUN_OBJ_1(flip_frame_obj, flip_frame);
 
 static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args)
 {
