@@ -1,11 +1,12 @@
-import app
+from app import SASPPUApp
 import sasppu
 import math
 import time
 import display
 
-from events.input import BUTTON_TYPES, ButtonDownEvent, RequestStopAppEvent
+from events.input import BUTTON_TYPES, ButtonDownEvent
 from system.eventbus import eventbus
+from system.scheduler.events import RequestStopAppEvent
 
 WHITE = 0b0111111111111111
 RED = 0b0111110000000000
@@ -13,14 +14,14 @@ GREEN = 0b0000001111100000
 BLUE = 0b0000000000011111
 GREY = 0b0100001000010000
 
-class SASPPUTest(app.SASPPUApp):
+class SASPPUTest(SASPPUApp):
     def __init__(self):
         super().__init__()
-        eventbus.on(ButtonDownEvent, self._handle_buttondown, self.app)
+        eventbus.on(ButtonDownEvent, self._handle_buttondown, self)
         self.exit = False
 
     def _cleanup(self):
-        eventbus.remove(ButtonDownEvent, self._handle_buttondown, self.app)
+        eventbus.remove(ButtonDownEvent, self._handle_buttondown, self)
         self.exit = True
         self.minimise()
 

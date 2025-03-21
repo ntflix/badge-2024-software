@@ -1080,7 +1080,6 @@ cmath_eleven:
   .literal .LCsprite_jump_table, sprite_jump_table
   .literal .LCcmath_jump_table, cmath_jump_table
   .literal .LCper_pixel_jump_table, per_pixel_jump_table
-  .literal .LCper_scanline, SASPPU_per_scanline
 
   .align 4
   .global SASPPU_render_scanline
