@@ -51,3 +51,11 @@ class App:
 
     def minimise(self):
         eventbus.emit(RequestForegroundPopEvent(self))
+
+class SASPPUApp(App):
+    def __init__(self):
+        super().__init__()
+        self.can_share_context = False
+
+    def draw(self):
+        pass

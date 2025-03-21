@@ -85,6 +85,14 @@ static mp_obj_t end_frame(mp_obj_t ctx)
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(end_frame_obj, end_frame);
 
+static mp_obj_t flip_frame(mp_obj_t ctx)
+{
+    flow3r_bsp_display_send_fb(tildagon_fb);
+    gfx_fps_update();
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(flip_frame_obj, end_fraflip_frameme);
+
 static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args)
 {
     // Draw a regular hexagon in a context and return the context
@@ -136,6 +144,7 @@ static const mp_rom_map_elem_t display_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_get_fps), MP_ROM_PTR(&get_fps_obj)},
     {MP_ROM_QSTR(MP_QSTR_start_frame), MP_ROM_PTR(&start_frame_obj)},
     {MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj)},
+    {MP_ROM_QSTR(MP_QSTR_flip_frame), MP_ROM_PTR(&flip_frame_obj)},
     {MP_ROM_QSTR(MP_QSTR_hexagon), MP_ROM_PTR(&hexagon_obj)},
 };
 static MP_DEFINE_CONST_DICT(display_module_globals, display_module_globals_table);

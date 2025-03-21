@@ -13,6 +13,8 @@ from system.scheduler.events import (
 )
 from system.notification.events import ShowNotificationEvent
 
+from app import SASPPUApp
+from sasppu import sasppuinternal_render
 
 class _Scheduler:
     # Always receive all events
@@ -212,12 +214,11 @@ class _Scheduler:
             self.render_needed.clear()
 
             with PerfTimer("render"):
-                ctx = display.start_frame()
-                for app in self.foreground_stack[-1:] + self.on_top_stack:
+                if isinstance(self.foreground_stack[-1], SASPPUApp):
+                    app = self.foreground_stack[-1]
                     with PerfTimer(f"rendering {app}"):
-                        ctx.save()
                         try:
-                            app.draw(ctx)
+                            app.draw()
                         except Exception as e:
                             eventbus.emit(RequestStopAppEvent(app=app))
                             sys.print_exception(e, sys.stderr)
@@ -226,8 +227,25 @@ class _Scheduler:
                                     message=f"{app.__class__.__name__} has crashed"
                                 )
                             )
-                        ctx.restore()
-                display.end_frame(ctx)
+                        sasppuinternal_render()
+                    display.flip_frame()
+                else:
+                    ctx = display.start_frame()
+                    for app in self.foreground_stack[-1:] + self.on_top_stack:
+                        with PerfTimer(f"rendering {app}"):
+                            ctx.save()
+                            try:
+                                app.draw(ctx)
+                            except Exception as e:
+                                eventbus.emit(RequestStopAppEvent(app=app))
+                                sys.print_exception(e, sys.stderr)
+                                eventbus.emit(
+                                    ShowNotificationEvent(
+                                        message=f"{app.__class__.__name__} has crashed"
+                                    )
+                                )
+                            ctx.restore()
+                    display.end_frame(ctx)
             await asyncio.sleep(0)
 
     async def _main(self):
