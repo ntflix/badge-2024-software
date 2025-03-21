@@ -45,7 +45,6 @@ static mp_obj_t sasppu_background_make_new(const mp_obj_type_t *type, size_t n_a
 static const mp_rom_map_elem_t sasppu_background_locals_dict_table[] = {};
 static MP_DEFINE_CONST_DICT(sasppu_background_locals_dict, sasppu_background_locals_dict_table);
 
-// This defines the type(Timer) object.
 MP_DEFINE_CONST_OBJ_TYPE(
     sasppu_type_background,
     MP_QSTR_Background,
@@ -76,7 +75,6 @@ static mp_obj_t sasppu_sprite_make_new(const mp_obj_type_t *type, size_t n_args,
 static const mp_rom_map_elem_t sasppu_sprite_locals_dict_table[] = {};
 static MP_DEFINE_CONST_DICT(sasppu_sprite_locals_dict, sasppu_sprite_locals_dict_table);
 
-// This defines the type(Timer) object.
 MP_DEFINE_CONST_OBJ_TYPE(
     sasppu_type_sprite,
     MP_QSTR_Sprite,
@@ -254,20 +252,6 @@ static mp_obj_t render(void)
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(render_obj, render);
 
-static mp_obj_t render_scanline(mp_obj_t x, mp_obj_t y)
-{
-    SASPPU_render_scanline(mp_obj_get_int(x), mp_obj_get_int(y));
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_2(render_scanline_obj, render_scanline);
-
-static mp_obj_t per_scanline(mp_obj_t x, mp_obj_t y)
-{
-    SASPPU_per_scanline(mp_obj_get_int(x), mp_obj_get_int(y));
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_2(per_scanline_obj, per_scanline);
-
 static mp_obj_t init(void)
 {
     SASPPU_gfx_reset();
@@ -299,8 +283,6 @@ static const mp_rom_map_elem_t sasppu_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_Sprite), MP_ROM_PTR(&sasppu_type_sprite)},
 
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_render), MP_ROM_PTR(&render_obj)},
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_render_scanline), MP_ROM_PTR(&render_scanline_obj)},
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_per_scanline), MP_ROM_PTR(&per_scanline_obj)},
 
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg0_state), MP_ROM_PTR(&bg0_state_obj)},
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg1_state), MP_ROM_PTR(&bg1_state_obj)},

@@ -169,10 +169,6 @@ def sim_main():
 
     _sim.SCREENSHOT = args.screenshot
 
-    #if args.override_app is not None:
-    #    import st3m.run
-    #    st3m.run.override_main_app = args.override_app
-
     import main
 
 

@@ -10,6 +10,10 @@
 #define MICROPY_HW_I2C0_SCL                 (9)
 #define MICROPY_HW_I2C0_SDA                 (8)
 
+#define MICROPY_HW_USB_CDC                  (0)
+#define MICROPY_HW_ESP_USB_SERIAL_JTAG      (1) 
+#define MICROPY_HW_ENABLE_USBDEV            (0)
+
 #define MICROPY_PY_TILDAGON_I2C             (1)
 
 void tildagon_startup(void);

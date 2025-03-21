@@ -188,6 +188,8 @@ cmath_two:
   .short 2
 cmath_six:
   .short (1 << 6)
+cmath_eight:
+  .short (1 << 8)
 cmath_eleven:
   .short (1 << 11)
 
@@ -1066,6 +1068,7 @@ cmath_eleven:
   .literal .LCcmath_one, cmath_one
   .literal .LCcmath_two, cmath_two
   .literal .LCcmath_six, cmath_six
+  .literal .LCcmath_eight, cmath_eight
   .literal .LCcmath_eleven, cmath_eleven
 
   .align 4
@@ -1083,8 +1086,7 @@ cmath_eleven:
   .global SASPPU_render_scanline
   .type   SASPPU_render_scanline, @function
 // void render_scanline( a0 return, a1 stack
-  // uint8_t x, // a2
-  // uint8_t y, // a3
+  // uint8_t y, // a2
 //);
 SASPPU_render_scanline:
   entry sp, 0+64
@@ -1120,7 +1122,9 @@ SASPPU_render_scanline:
   addx4 a5, a5, a4
   l32i.n a7, a5, 0
 
-  mov.n a11, a3
+  mov.n a11, a2
+	l32r	a2, .LCcmath_one
+	l32r	a3, .LCcmath_eight
 
   movi a10, (240 - 8)
 .LCper_pixel_loop:
@@ -1133,15 +1137,17 @@ SASPPU_render_scanline:
 	l32r	a5, .LCframe_buffer
 	add.n	a4, a4, a10
 	addx2	a4, a4, a5
-  st.qr q0, a4, 0
 
-  addi.n a10, a10, -8
-  bgez a10, .LCper_pixel_loop
-  
-  retw.n
+  ee.vldbc.16.ip q1, a2, 0 // one
+  movi a5, 8
+  ee.vldbc.16.ip q2, a3, 0 // eight
+  wsr.sar a5
+  movi a5, 0
+  ee.vmul.u16 q3, q0, q1
+  wsr.sar a5
+  ee.vmul.u16 q4, q0, q2
+  ee.orq q0, q3, q4
 
-	add.n	a4, a4, a10
-	addx2	a4, a4, a5
   st.qr q0, a4, 0
 
   addi.n a10, a10, -8
