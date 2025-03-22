@@ -145,7 +145,8 @@ SASPPU_cmath_state_flags:
 SASPPU_sprite_cache:
   .zero (SPRITE_CACHE * 4 * 2)
 
-  .section .ext_ram.bss
+  #.section .ext_ram.bss
+  .section .bss
   .align 2
   .global SASPPU_oam
   .type   SASPPU_oam, @object

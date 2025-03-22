@@ -8,9 +8,8 @@
 
 EXT_RAM_BSS_ATTR uint16_t SASPPU_background[BG_WIDTH * BG_HEIGHT];
 EXT_RAM_BSS_ATTR uint16_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT];
-// EXT_RAM_BSS_ATTR uint16_t SASPPU_frame_buffer[240 * 240];
 
-EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[8][240];
+HDMAEntry SASPPU_hdma_tables[8][240];
 
 bool SASPPU_hdma_enable;
 

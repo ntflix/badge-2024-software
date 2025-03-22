@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "esp_timer.h"
+#include "esp_attr.h"
 
 static float smoothed_fps = 0.0f;
 
@@ -42,9 +43,8 @@ static MP_DEFINE_CONST_FUN_OBJ_0(get_fps_obj, get_fps);
 #define TILDAGON_DISPLAY_WIDTH 240
 #define TILDAGON_DISPLAY_HEIGHT 240
 
-// EXT_RAM_BSS_ATTR
-static uint8_t tildagon_fb1[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
-static uint8_t tildagon_fb2[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
+EXT_RAM_BSS_ATTR static uint8_t tildagon_fb1[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
+EXT_RAM_BSS_ATTR static uint8_t tildagon_fb2[TILDAGON_DISPLAY_WIDTH *TILDAGON_DISPLAY_HEIGHT * 2];
 static Ctx *tildagon_ctx = NULL;
 
 static inline Ctx *tildagon_gfx_ctx(void)
@@ -68,7 +68,7 @@ static inline void tildagon_start_frame(Ctx *ctx)
 
 inline uint8_t *get_framebuffer()
 {
-    return &tildagon_fb1;
+    return tildagon_fb1;
 }
 
 static mp_obj_t start_frame()
