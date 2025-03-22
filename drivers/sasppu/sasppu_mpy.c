@@ -2,6 +2,7 @@
 #include "py/runtime.h"
 #include "sasppu.h"
 #include "sasppu_help.h"
+#include "display.h"
 
 #define DEFINE_TRIVIAL_ACCESSOR(name, mask)                              \
     static mp_obj_t name##_accessor(size_t n_args, const mp_obj_t *args) \
@@ -247,7 +248,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(bg1_map_obj, 2, 3, bg1_map_accessor);
 
 static mp_obj_t render(void)
 {
-    SASPPU_render();
+    SASPPU_render(get_framebuffer());
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(render_obj, render);

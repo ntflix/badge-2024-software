@@ -17,6 +17,7 @@ GREY = 0b0100001000010000
 class SASPPUTest(SASPPUApp):
     def __init__(self):
         super().__init__()
+        self.request_fast_updates = True
         eventbus.on(ButtonDownEvent, self._handle_buttondown, self)
         self.exit = False
 
@@ -35,9 +36,9 @@ class SASPPUTest(SASPPUApp):
         sasppu.sasppuinternal_main_state_bgcol_windows(sasppu.WINDOW_A)
         sasppu.sasppuinternal_main_state_flags(sasppu.MAIN_CMATH_ENABLE)
         sasppu.sasppuinternal_cmath_state_flags(sasppu.CMATH_FADE_ENABLE)
-        sasppu.sasppuinternal_cmath_state_screen_fade(int((math.sin(cur_time / 10.0) + 1) * 127))
-        #sasppu.sasppuinternal_main_state_window_1_left(int((math.sin(cur_time * 3.0) + 1) * 64))
-        #sasppu.sasppuinternal_main_state_window_1_right(int((math.cos(cur_time * 5.0) + 3) * 64))
+        sasppu.sasppuinternal_cmath_state_screen_fade(int((math.sin(cur_time / 1000.0) + 1) * 127))
+        #sasppu.sasppuinternal_main_state_window_1_left(int((math.sin(cur_time / 1300.0) + 1) * 64))
+        #sasppu.sasppuinternal_main_state_window_1_right(int((math.cos(cur_time / 1500.0) + 3) * 64))
         print("fps:", display.get_fps())
 
     def _handle_buttondown(self, event: ButtonDownEvent):

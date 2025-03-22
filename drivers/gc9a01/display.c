@@ -3,7 +3,10 @@
 #include "flow3r_bsp.h"
 #include "mp_uctx.h"
 #include "sasppu.h"
+#include "display.h"
 #include <math.h>
+
+#include "esp_timer.h"
 
 static float smoothed_fps = 0.0f;
 
@@ -40,14 +43,15 @@ static MP_DEFINE_CONST_FUN_OBJ_0(get_fps_obj, get_fps);
 #define TILDAGON_DISPLAY_HEIGHT 240
 
 // EXT_RAM_BSS_ATTR
-uint8_t tildagon_fb[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
+static uint8_t tildagon_fb1[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
+static uint8_t tildagon_fb2[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
 static Ctx *tildagon_ctx = NULL;
 
 static inline Ctx *tildagon_gfx_ctx(void)
 {
     if (tildagon_ctx == NULL)
     {
-        tildagon_ctx = ctx_new_for_framebuffer(tildagon_fb, TILDAGON_DISPLAY_WIDTH, TILDAGON_DISPLAY_HEIGHT, TILDAGON_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
+        tildagon_ctx = ctx_new_for_framebuffer(tildagon_fb1, TILDAGON_DISPLAY_WIDTH, TILDAGON_DISPLAY_HEIGHT, TILDAGON_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
     }
     return tildagon_ctx;
 }
@@ -62,6 +66,11 @@ static inline void tildagon_start_frame(Ctx *ctx)
     ctx_apply_transform(ctx, 1.0f, 0.0f, offset_x, 0.0f, 1.0f, offset_y, 0.0f, 0.0f, 1.0f);
 }
 
+inline uint8_t *get_framebuffer()
+{
+    return &tildagon_fb1;
+}
+
 static mp_obj_t start_frame()
 {
     Ctx *ctx = tildagon_gfx_ctx();
@@ -74,7 +83,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(start_frame_obj, start_frame);
 static inline void tildagon_end_frame(Ctx *ctx)
 {
     ctx_restore(ctx);
-    flow3r_bsp_display_send_fb(tildagon_fb);
+    flow3r_bsp_display_send_fb(tildagon_fb1);
     gfx_fps_update();
 }
 
@@ -88,8 +97,14 @@ static MP_DEFINE_CONST_FUN_OBJ_1(end_frame_obj, end_frame);
 
 static mp_obj_t flip_sasppu_frame(void)
 {
-    SASPPU_render();
-    flow3r_bsp_display_send_fb(tildagon_fb);
+    int64_t then = esp_timer_get_time();
+    SASPPU_render(get_framebuffer());
+    int64_t now = esp_timer_get_time();
+    mp_printf(&mp_plat_print, "render time: %uus\n", now - then);
+    then = now;
+    flow3r_bsp_display_send_fb(tildagon_fb1);
+    now = esp_timer_get_time();
+    mp_printf(&mp_plat_print, "display flip time: %uus\n", now - then);
     gfx_fps_update();
     return mp_const_none;
 }

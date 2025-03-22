@@ -182,7 +182,10 @@ class _Scheduler:
         async def mark_update_finished():
             # Unblock renderer
             self.render_needed.set()
-            await asyncio.sleep(0.05)
+            if app.request_fast_updates:
+                await asyncio.sleep(0.00)
+            else:
+                await asyncio.sleep(0.05)
 
             # If we're no longer foregounded, wait until it is before returning
             did_lose_focus = False
@@ -229,7 +232,7 @@ class _Scheduler:
             self.render_needed.clear()
 
             with PerfTimer("render"):
-                if isinstance(self.foreground_stack[-1], SASPPUApp):
+                if len(self.foreground_stack) > 0 and isinstance(self.foreground_stack[-1], SASPPUApp):
                     app = self.foreground_stack[-1]
                     with PerfTimer(f"rendering {app}"):
                         try:

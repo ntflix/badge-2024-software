@@ -8,6 +8,7 @@ from system.scheduler.events import RequestForegroundPopEvent
 class App:
     def __init__(self):
         self.overlays = []
+        self.request_fast_updates = False
         pass
 
     async def run(self, render_update):

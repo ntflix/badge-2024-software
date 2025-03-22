@@ -1059,7 +1059,6 @@ cmath_eleven:
   .literal .LCsprite_cache_1, SASPPU_sprite_cache 
   .literal .LCsprite_cache_2, SASPPU_sprite_cache + (SPRITE_CACHE * 4)
   .literal .LCsprite_cache_end, SASPPU_sprite_cache + (SPRITE_CACHE * 4 * 2)
-  .literal .LCframe_buffer, tildagon_fb
   .literal .LCvector_increments, vector_increments
   .literal .LCcmath_bit, cmath_bit
   .literal .LCcmath_mask_low, cmath_mask_low
@@ -1086,6 +1085,7 @@ cmath_eleven:
   .type   SASPPU_render_scanline, @function
 // void render_scanline( a0 return, a1 stack
   // uint8_t y, // a2
+  // uint8_t *fb, // a3
 //);
 SASPPU_render_scanline:
   entry sp, 0+64
@@ -1123,23 +1123,16 @@ SASPPU_render_scanline:
 
   mov.n a11, a2
 	l32r	a2, .LCcmath_one
-	l32r	a3, .LCcmath_eight
+	l32r	a4, .LCcmath_eight
 
   movi a10, (240 - 8)
 .LCper_pixel_loop:
   mov.n a12, a6
   callx8 a7
   
-	slli  a4, a11, 4
-	sub	  a4, a4, a11
-	slli	a4, a4, 4
-	l32r	a5, .LCframe_buffer
-	add.n	a4, a4, a10
-	addx2	a4, a4, a5
-
   ee.vldbc.16.ip q1, a2, 0 // one
   movi a5, 8
-  ee.vldbc.16.ip q2, a3, 0 // eight
+  ee.vldbc.16.ip q2, a4, 0 // eight
   wsr.sar a5
   movi a5, 0
   ee.vmul.u16 q3, q0, q1
@@ -1147,7 +1140,13 @@ SASPPU_render_scanline:
   ee.vmul.u16 q4, q0, q2
   ee.orq q0, q3, q4
 
-  st.qr q0, a4, 0
+	slli  a5, a11, 4
+	sub	  a5, a5, a11
+	slli	a5, a5, 4
+	add.n	a5, a5, a10
+	addx2	a5, a5, a3
+
+  st.qr q0, a5, 0
 
   addi.n a10, a10, -8
   bgez a10, .LCper_pixel_loop

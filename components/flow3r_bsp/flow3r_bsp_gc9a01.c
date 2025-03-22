@@ -551,6 +551,10 @@ esp_err_t flow3r_bsp_gc9a01_init(flow3r_bsp_gc9a01_t *gc9a01,
     if (ret != ESP_OK) {
         goto cleanup_spi_device;
     }
+    ret = flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
+    if (ret != ESP_OK) {
+        goto cleanup_spi_device;
+    }
 
     return ret;
 
@@ -603,7 +607,8 @@ static inline esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01
     blit->fb = (const uint8_t *)fb;
     blit->left = 2 * 240 * 240;  // left in native bytes (16bpp)
 
-    return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
+    //return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
+    return ESP_OK;
 }
 
 static inline uint8_t flow3r_bsp_gc9a01_blit_done(flow3r_bsp_gc9a01_blit_t *blit) {
