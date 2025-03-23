@@ -605,7 +605,7 @@ static inline esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01
 
     blit->gc9a01 = gc9a01;
     blit->fb = (const uint8_t *)fb;
-    blit->left = 2 * 240 * 240;  // left in native bytes (16bpp)
+    blit->left = 2 * 240 * 240 / 4;  // left in native bytes (16bpp)
 
     //return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
     return ESP_OK;

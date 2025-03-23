@@ -1,6 +1,7 @@
 from machine import Pin, SPI
 import neopixel
 from egpio import ePin
+from critical import Critical
 
 BUS_SYSTEM = 7
 BUS_TOP = 0
@@ -81,6 +82,10 @@ class _tildagonos:
 
     def set_led_power(self, state):
         ePin(EPIN_LED_POWER)(state)
+
+    def write_leds(self):
+        #with Critical():
+        self.leds.write()
 
 
 tildagonos = _tildagonos()

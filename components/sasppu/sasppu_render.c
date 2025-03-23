@@ -9,7 +9,7 @@
 EXT_RAM_BSS_ATTR uint16_t SASPPU_background[BG_WIDTH * BG_HEIGHT];
 EXT_RAM_BSS_ATTR uint16_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT];
 
-HDMAEntry SASPPU_hdma_tables[8][240];
+EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[8][240];
 
 bool SASPPU_hdma_enable;
 
@@ -144,10 +144,10 @@ static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
     return SASPPU_render_scanline(y, fb);
 }
 
-void SASPPU_render(uint8_t *fb)
+void SASPPU_render(uint8_t *fb, uint8_t section)
 {
     // Screen is rendered top to bottom for sanity's sake
-    for (int y = 0; y < 240; y++)
+    for (int y = 60 * section; y < 60 * (section + 1); y++)
     {
         SASPPU_per_scanline(y, fb);
     }

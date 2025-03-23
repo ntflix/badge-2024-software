@@ -146,6 +146,6 @@ typedef struct
 
 extern HDMAEntry SASPPU_hdma_tables[SASPPU_HDMA_TABLE_COUNT][240];
 
-void SASPPU_render(uint8_t *fb);
+void SASPPU_render(uint8_t *fb, uint8_t section);
 
 #endif // SASPPU_SASPPU_H_

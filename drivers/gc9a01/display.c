@@ -8,6 +8,10 @@
 
 #include "esp_timer.h"
 #include "esp_attr.h"
+#include "esp_task.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/idf_additions.h"
 
 static float smoothed_fps = 0.0f;
 
@@ -43,15 +47,59 @@ static MP_DEFINE_CONST_FUN_OBJ_0(get_fps_obj, get_fps);
 #define TILDAGON_DISPLAY_WIDTH 240
 #define TILDAGON_DISPLAY_HEIGHT 240
 
-EXT_RAM_BSS_ATTR static uint8_t tildagon_fb1[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
-EXT_RAM_BSS_ATTR static uint8_t tildagon_fb2[TILDAGON_DISPLAY_WIDTH *TILDAGON_DISPLAY_HEIGHT * 2];
+static uint8_t tildagon_fb[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
 static Ctx *tildagon_ctx = NULL;
+
+typedef enum
+{
+    FB_INVALID,
+    FB_RENDERED,
+    FB_DISPLAYED,
+} FramebufferState;
+static FramebufferState fb_sect_state[4] = {FB_INVALID, FB_INVALID, FB_INVALID, FB_INVALID};
+
+static portTASK_FUNCTION(vADisplayFlip, pvParameters)
+{
+    for (;;)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            // int64_t then = esp_timer_get_time();
+            while (fb_sect_state[i] != FB_RENDERED)
+            {
+                xTaskNotifyWait(0, ULONG_MAX, NULL, portMAX_DELAY);
+            }
+
+            flow3r_bsp_display_send_fb(tildagon_fb + (TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2 / 4) * i);
+            // int64_t now = esp_timer_get_time();
+            // mp_printf(&mp_plat_print, "display sect %u flip time: %uus\n", i, now - then);
+
+            fb_sect_state[i] = FB_INVALID;
+        }
+    }
+    vTaskDelete(NULL);
+}
+
+TaskHandle_t display_flip_task = NULL;
+
+static mp_obj_t start_display_flip_task()
+{
+    xTaskCreatePinnedToCore(vADisplayFlip,
+                            "DisplayFlip",
+                            2048,
+                            NULL,
+                            tskIDLE_PRIORITY + 2,
+                            &display_flip_task, 0);
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(start_display_flip_task_obj, start_display_flip_task);
 
 static inline Ctx *tildagon_gfx_ctx(void)
 {
     if (tildagon_ctx == NULL)
     {
-        tildagon_ctx = ctx_new_for_framebuffer(tildagon_fb1, TILDAGON_DISPLAY_WIDTH, TILDAGON_DISPLAY_HEIGHT, TILDAGON_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
+        tildagon_ctx = ctx_new_for_framebuffer(tildagon_fb, TILDAGON_DISPLAY_WIDTH, TILDAGON_DISPLAY_HEIGHT, TILDAGON_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
     }
     return tildagon_ctx;
 }
@@ -66,10 +114,23 @@ static inline void tildagon_start_frame(Ctx *ctx)
     ctx_apply_transform(ctx, 1.0f, 0.0f, offset_x, 0.0f, 1.0f, offset_y, 0.0f, 0.0f, 1.0f);
 }
 
-inline uint8_t *get_framebuffer()
+static mp_obj_t section_ready(mp_obj_t section)
 {
-    return tildagon_fb1;
+    mp_uint_t i = mp_obj_int_get_uint_checked(section);
+    return fb_sect_state[i] == FB_INVALID ? mp_const_true : mp_const_false;
 }
+static MP_DEFINE_CONST_FUN_OBJ_1(section_ready_obj, section_ready);
+
+static mp_obj_t all_sections_ready()
+{
+    return (fb_sect_state[0] == FB_INVALID) &&
+                   (fb_sect_state[1] == FB_INVALID) &&
+                   (fb_sect_state[2] == FB_INVALID) &&
+                   (fb_sect_state[3] == FB_INVALID)
+               ? mp_const_true
+               : mp_const_false;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(all_sections_ready_obj, all_sections_ready);
 
 static mp_obj_t start_frame()
 {
@@ -83,7 +144,14 @@ static MP_DEFINE_CONST_FUN_OBJ_0(start_frame_obj, start_frame);
 static inline void tildagon_end_frame(Ctx *ctx)
 {
     ctx_restore(ctx);
-    flow3r_bsp_display_send_fb(tildagon_fb1);
+    fb_sect_state[0] = FB_RENDERED;
+    fb_sect_state[1] = FB_RENDERED;
+    fb_sect_state[2] = FB_RENDERED;
+    fb_sect_state[3] = FB_RENDERED;
+    if (display_flip_task)
+    {
+        xTaskNotify(display_flip_task, 0, eNoAction);
+    }
     gfx_fps_update();
 }
 
@@ -95,20 +163,25 @@ static mp_obj_t end_frame(mp_obj_t ctx)
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(end_frame_obj, end_frame);
 
-static mp_obj_t flip_sasppu_frame(void)
+static mp_obj_t flip_sasppu_section(mp_obj_t section)
 {
-    int64_t then = esp_timer_get_time();
-    SASPPU_render(get_framebuffer());
-    int64_t now = esp_timer_get_time();
-    mp_printf(&mp_plat_print, "render time: %uus\n", now - then);
-    then = now;
-    flow3r_bsp_display_send_fb(tildagon_fb1);
-    now = esp_timer_get_time();
-    mp_printf(&mp_plat_print, "display flip time: %uus\n", now - then);
-    gfx_fps_update();
+    mp_uint_t i = mp_obj_int_get_uint_checked(section);
+    // int64_t then = esp_timer_get_time();
+    SASPPU_render(tildagon_fb, i);
+    // int64_t now = esp_timer_get_time();
+    // mp_printf(&mp_plat_print, "render sect %u time: %uus\n", i, now - then);
+    fb_sect_state[i] = FB_RENDERED;
+    if (display_flip_task)
+    {
+        xTaskNotify(display_flip_task, 0, eNoAction);
+    }
+    if (i == 3)
+    {
+        gfx_fps_update();
+    }
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_0(flip_sasppu_frame_obj, flip_sasppu_frame);
+static MP_DEFINE_CONST_FUN_OBJ_1(flip_sasppu_section_obj, flip_sasppu_section);
 
 static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args)
 {
@@ -161,7 +234,10 @@ static const mp_rom_map_elem_t display_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_get_fps), MP_ROM_PTR(&get_fps_obj)},
     {MP_ROM_QSTR(MP_QSTR_start_frame), MP_ROM_PTR(&start_frame_obj)},
     {MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj)},
-    {MP_ROM_QSTR(MP_QSTR_flip_sasppu_frame), MP_ROM_PTR(&flip_sasppu_frame_obj)},
+    {MP_ROM_QSTR(MP_QSTR_flip_sasppu_section), MP_ROM_PTR(&flip_sasppu_section_obj)},
+    {MP_ROM_QSTR(MP_QSTR_start_display_flip_task), MP_ROM_PTR(&start_display_flip_task_obj)},
+    {MP_ROM_QSTR(MP_QSTR_section_ready), MP_ROM_PTR(&section_ready_obj)},
+    {MP_ROM_QSTR(MP_QSTR_all_sections_ready), MP_ROM_PTR(&all_sections_ready_obj)},
     {MP_ROM_QSTR(MP_QSTR_hexagon), MP_ROM_PTR(&hexagon_obj)},
 };
 static MP_DEFINE_CONST_DICT(display_module_globals, display_module_globals_table);

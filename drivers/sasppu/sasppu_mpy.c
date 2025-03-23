@@ -246,13 +246,6 @@ static mp_obj_t bg1_map_accessor(size_t n_args, const mp_obj_t *args)
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(bg1_map_obj, 2, 3, bg1_map_accessor);
 
-static mp_obj_t render(void)
-{
-    SASPPU_render(get_framebuffer());
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_0(render_obj, render);
-
 static mp_obj_t init(void)
 {
     SASPPU_gfx_reset();
@@ -282,8 +275,6 @@ static const mp_rom_map_elem_t sasppu_globals_table[] = {
 
     {MP_ROM_QSTR(MP_QSTR_Background), MP_ROM_PTR(&sasppu_type_background)},
     {MP_ROM_QSTR(MP_QSTR_Sprite), MP_ROM_PTR(&sasppu_type_sprite)},
-
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_render), MP_ROM_PTR(&render_obj)},
 
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg0_state), MP_ROM_PTR(&bg0_state_obj)},
     {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg1_state), MP_ROM_PTR(&bg1_state_obj)},

@@ -226,6 +226,7 @@ class _Scheduler:
             await asyncio.sleep(1)"""
 
     async def _render_task(self):
+        display.start_display_flip_task()
         while True:
             # Do not bother re-rendering unless an update has happened
             await self.render_needed.wait()
@@ -245,8 +246,13 @@ class _Scheduler:
                                     message=f"{app.__class__.__name__} has crashed"
                                 )
                             )
-                    display.flip_sasppu_frame()
+                    for i in range(4):
+                        while not display.section_ready(i):
+                            await asyncio.sleep(0)
+                        display.flip_sasppu_section(i)
                 else:
+                    while not display.all_sections_ready():
+                        await asyncio.sleep(0)
                     ctx = display.start_frame()
                     for app in self.foreground_stack[-1:] + self.on_top_stack:
                         with PerfTimer(f"rendering {app}"):
