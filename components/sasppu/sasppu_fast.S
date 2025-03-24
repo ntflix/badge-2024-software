@@ -85,6 +85,8 @@ size_of_Background:
 .set WINDOW_AB, (0b0100)
 .set WINDOW_X, (0b1000)
 
+.set REVERSE_BYTES, (1)
+
   .section .bss
   .align 2
   .global SASPPU_main_state_mainscreen_colour
@@ -181,186 +183,101 @@ cmath_mask_low:
 cmath_mask_high:
   .short 0b0111111111100000
 cmath_mask_split:
-  .short 0b1111100000000000
+  .short 0b0111110000000000
 cmath_one:
   .short 1
 cmath_two:
   .short 2
-cmath_six:
-  .short (1 << 6)
+cmath_five:
+  .short (1 << 5)
 cmath_eight:
   .short (1 << 8)
-cmath_eleven:
-  .short (1 << 11)
+cmath_ten:
+  .short (1 << 10)
 
-.macro window_macro_q6 wincase
-.if \wincase == 14
-  ee.orq q5, q2, q3
-  ee.notq q6, q6
-  ee.andq q5, q5, q6
+// q5 is the result & !q6
+// q6 is !q5
+.macro window_macro_q wincase, qreg
+.if \wincase == 15
+  ee.notq q5, \qreg
+.if \qreg != q6
   ee.notq q6, q5
 .endif
+.endif
+.if \wincase == 14
+  ee.notq q5, q3
+  ee.andq q5, q5, q2
+  ee.orq q6, q5, \qreg
+  ee.notq q5, q6
+.endif
 .if \wincase == 13
-  ee.andq q5, q2, q3
-  ee.orq q6, q5, q6
+  ee.notq q5, q2
+  ee.andq q5, q5, q3
+  ee.orq q6, q5, \qreg
   ee.notq q5, q6
 .endif
 .if \wincase == 12
   ee.xorq q5, q2, q3
-  ee.notq q6, q6
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
+  ee.orq q6, q5, \qreg
+  ee.notq q5, q6
 .endif
 .if \wincase == 11
-  ee.notq q5, q3
-  ee.notq q6, q6
-  ee.orq q5, q2, q5
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
+  ee.andq q5, q2, q3
+  ee.orq q6, q5, \qreg
+  ee.notq q5, q6
 .endif
 .if \wincase == 10
-  ee.notq q6, q6
-  ee.andq q5, q2, q6
-  ee.notq q6, q5
+  ee.orq q6, q2, \qreg
+  ee.notq q5, q6
 .endif
 .if \wincase == 9
+  ee.orq q6, q3, \qreg
+  ee.notq q5, q6
+.endif
+.if \wincase == 8
+  ee.orq q6, \qreg, q2
   ee.orq q6, q3, q6
   ee.notq q5, q6
 .endif
-.if \wincase == 8
-  ee.notq q5, q3
-  ee.andq q5, q2, q5
-  ee.notq q6, q6
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
 .if \wincase == 7
-  ee.notq q5, q2
-  ee.orq q5, q3, q5
-  ee.notq q6, q6
+  ee.notq q6, \qreg
+  ee.orq q5, q2, q3
   ee.andq q5, q5, q6
   ee.notq q6, q5
 .endif
 .if \wincase == 6
-  ee.notq q6, q6
+  ee.notq q6, \qreg
   ee.andq q5, q3, q6
   ee.notq q6, q5
 .endif
 .if \wincase == 5
-  ee.orq q6, q2, q6
-  ee.notq q5, q6
-.endif
-.if \wincase == 4
-  ee.notq q5, q2
-  ee.andq q5, q3, q5
-  ee.notq q6, q6
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 3
-  ee.xorq q5, q2, q3
-  ee.orq q6, q5, q6
-  ee.notq q5, q6
-.endif
-.if \wincase == 2
-  ee.andq q5, q2, q3
-  ee.notq q6, q6
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 1
-  ee.orq q5, q2, q3
-  ee.orq q6, q5, q6
-  ee.notq q5, q6
-.endif
-.if \wincase == 15
-  ee.notq q5, q6
-.endif
-.endm
-
-.macro window_macro_q7 wincase
-.if \wincase == 15
-  mv.qr q6, q7
-  ee.notq q5, q6
-.endif
-.if \wincase == 14
-  ee.orq q5, q2, q3
-  ee.notq q6, q7
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 13
-  ee.andq q5, q2, q3
-  ee.orq q6, q5, q7
-  ee.notq q5, q6
-.endif
-.if \wincase == 12
-  ee.xorq q5, q2, q3
-  ee.notq q6, q7
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 11
-  ee.notq q5, q3
-  ee.orq q5, q2, q5
-  ee.notq q6, q7
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 10
-  ee.notq q6, q7
+  ee.notq q6, \qreg
   ee.andq q5, q2, q6
   ee.notq q6, q5
 .endif
-.if \wincase == 9
-  ee.orq q6, q3, q7
-  ee.notq q5, q6
-.endif
-.if \wincase == 8
-  ee.notq q5, q3
-  ee.andq q5, q2, q5
-  ee.notq q6, q7
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 7
-  ee.notq q5, q2
-  ee.orq q5, q3, q5
-  ee.notq q6, q7
-  ee.andq q5, q5, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 6
-  ee.notq q6, q7
-  ee.andq q5, q3, q6
-  ee.notq q6, q5
-.endif
-.if \wincase == 5
-  ee.orq q6, q2, q7
-  ee.notq q5, q6
-.endif
 .if \wincase == 4
-  ee.notq q5, q2
-  ee.andq q5, q3, q5
-  ee.notq q6, q7
+  ee.andq q5, q3, q2
+  ee.notq q6, \qreg
   ee.andq q5, q5, q6
   ee.notq q6, q5
 .endif
 .if \wincase == 3
   ee.xorq q5, q2, q3
-  ee.orq q6, q5, q7
-  ee.notq q5, q6
-.endif
-.if \wincase == 2
-  ee.andq q5, q2, q3
-  ee.notq q6, q7
+  ee.notq q6, \qreg
   ee.andq q5, q5, q6
   ee.notq q6, q5
 .endif
-.if \wincase == 1
-  ee.orq q5, q2, q3
-  ee.orq q6, q5, q7
+.if \wincase == 2
+  ee.orq q6, \qreg, q2
   ee.notq q5, q6
+  ee.andq q5, q5, q3
+  ee.notq q6, q5
+.endif
+.if \wincase == 1
+  ee.orq q6, \qreg, q3
+  ee.notq q5, q6
+  ee.andq q5, q5, q2
+  ee.notq q6, q5
 .endif
 .endm
 
@@ -372,11 +289,10 @@ cmath_eleven:
 
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
-  ee.notq q6, q6
-  window_macro_q6 \wincase
-  ee.andq q0, q0, q5
-  ee.andq q1, q1, q5
-  ee.andq q4, q4 ,q6
+  window_macro_q \wincase, q6
+  ee.andq q0, q0, q6
+  ee.andq q1, q1, q6
+  ee.andq q4, q4, q5
   ee.orq q0, q0, q4
   ee.orq q1, q1, q4
 .endm
@@ -387,9 +303,9 @@ cmath_eleven:
 .exitm
 .endif
 
-  window_macro_q7 \wincase
-  ee.andq q0, q0, q5
-  ee.andq q6, q4 ,q6
+  window_macro_q \wincase, q7
+  ee.andq q0, q0, q6
+  ee.andq q6, q4, q5
   ee.orq q0, q0, q6
 .endm
 
@@ -399,9 +315,9 @@ cmath_eleven:
 .exitm
 .endif
 
-  window_macro_q7 \wincase
-  ee.andq q1, q1, q5
-  ee.andq q6, q4 ,q6
+  window_macro_q \wincase, q7
+  ee.andq q1, q1, q6
+  ee.andq q6, q4, q5
   ee.orq q1, q1, q6
 .endm
 
@@ -414,24 +330,21 @@ cmath_eleven:
 .if \subwincase == 0
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
-  ee.notq q6, q6
-  window_macro_q6 \mainwincase
-  ee.andq q0, q0, q5
-  ee.andq q4, q4 ,q6
+  window_macro_q \mainwincase, q6
+  ee.andq q0, q0, q6
+  ee.andq q4, q4, q5
   ee.orq q0, q0, q4
 .else
 .if \mainwincase == 0
   ee.zero.q q6
   ee.vcmp.eq.s16 q6, q4, q6
-  ee.notq q6, q6
-  window_macro_q6 \subwincase
-  ee.andq q1, q1, q5
-  ee.andq q4, q4 ,q6
+  window_macro_q \subwincase, q6
+  ee.andq q1, q1, q6
+  ee.andq q4, q4, q5
   ee.orq q1, q1, q4
 .else
   ee.zero.q q7
   ee.vcmp.eq.s16 q7, q4, q7
-  ee.notq q7, q7
   window_macro_main \mainwincase
   window_macro_sub \subwincase
 .endif
@@ -486,7 +399,7 @@ cmath_eleven:
   l32r a9, .LCbackground
 .Ly_flip_1_\unique:
   mov.n a10, a12
-  bbci.l a13, 1, .Lno_y_flip_1_\unique
+  bbci a13, 1, .Lno_y_flip_1_\unique
   sub a10, a14, a10
 .Lno_y_flip_1_\unique:
   slli a10, a10, (BG_WIDTH_POWER)
@@ -495,7 +408,7 @@ cmath_eleven:
   ld.qr q4, a10, 0 // load bg0_1 (offset_y flip)
 .Ly_flip_2_\unique:
   mov.n a10, a12
-  bbci.l a15, 1, .Lno_y_flip_2_\unique
+  bbci a15, 1, .Lno_y_flip_2_\unique
   sub a10, a14, a10
 .Lno_y_flip_2_\unique:
   slli a10, a10, (BG_WIDTH_POWER)
@@ -503,8 +416,8 @@ cmath_eleven:
   addx2 a10, a10, a9
   ld.qr q5, a10, 0 // load bg0_1 (offset_y flip)
 
-  bbci.l a13, 0, .Lno_x_flip_1_\unique
-  bbci.l a15, 0, .Lno_x_flip_2_1_\unique
+  bbci a13, 0, .Lno_x_flip_1_\unique
+  bbci a15, 0, .Lno_x_flip_2_1_\unique
   // flip both
   ee.vzip.16 q4, q5
   ee.vzip.16 q5, q4
@@ -523,7 +436,7 @@ cmath_eleven:
   mv.qr q4, q6
   j .Lflip_end_\unique
 .Lno_x_flip_1_\unique:
-  bbci.l a15, 0, .Lno_x_flip_2_2_\unique
+  bbci a15, 0, .Lno_x_flip_2_2_\unique
   // flip just 2
   ee.vzip.16 q5, q6
   ee.vzip.16 q6, q5
@@ -540,8 +453,8 @@ cmath_eleven:
 .else
   l32r  a9,  .LCbg1_state
 .endif
-  l8ui  a15, a9, Background.flags
-  bbci.l a15, 0, .Lno_cmath_\unique
+  l8ui a15, a9, Background.flags
+  bbci a15, 0, .Lno_cmath_\unique
   l32r a14, .LCcmath_bit
   ee.vldbc.16.ip q5, a14, 0
   ee.orq q4, q4, q5 
@@ -721,26 +634,23 @@ cmath_eleven:
 .macro colour_split_main
   movi a15, 0
   wsr.sar a15
-  l32r a12, .LCcmath_six
-  l32r a13, .LCcmath_eleven
-  l32r a14, .LCcmath_two
+  l32r a12, .LCcmath_five
+  l32r a13, .LCcmath_ten
   l32r a11, .LCcmath_mask_split
-  ee.vldbc.16.ip q2, a12, 0 // six
-  ee.vldbc.16.ip q3, a13, 0 // eleven
+  ee.vldbc.16.ip q2, a12, 0 // five
+  ee.vldbc.16.ip q3, a13, 0 // ten
   ee.vldbc.16.ip q4, a11, 0 // mask
-  ee.vldbc.16.ip q5, a14, 0 // two
   ee.vmul.u16 q7, q0, q3 // blue
   ee.vmul.u16 q6, q0, q2 // green
-  ee.vmul.u16 q5, q0, q5 // red
+  ee.andq q7, q7, q4
   ee.andq q6, q6, q4
-  ee.andq q5, q5, q4
+  ee.andq q5, q0, q4
 .endm
 
 .macro colour_split_sub
-  ee.vldbc.16.ip q0, a14, 0 // two
   ee.vmul.u16 q3, q1, q3 // blue
   ee.vmul.u16 q2, q1, q2 // green
-  ee.vmul.u16 q1, q1, q0 // red
+  ee.andq q3, q3, q4
   ee.andq q2, q2, q4
   ee.andq q1, q1, q4
 .endm
@@ -766,12 +676,17 @@ cmath_eleven:
 .endm
 
 .macro recombine_colour // assumes cmath_one in q0
-  movi a12, 5
+  movi a12, 4
   wsr.sar a12
-  movi a12, 11
+  movi a12, 10
   ee.vmul.u16 q6, q6, q0
   wsr.sar a12
+  l32r a13, .LCcmath_two
+  movi a12, 0
+  ee.vldbc.16.ip q3, a13, 0
   ee.vmul.u16 q7, q7, q0
+  wsr.sar a12
+  ee.vmul.u16 q5, q5, q3
   ee.orq q0, q6, q5
   ee.orq q0, q0, q7
 .endm
@@ -875,6 +790,10 @@ cmath_eleven:
   ee.orq q5, q5, q0
   ee.orq q6, q6, q1
   ee.orq q7, q7, q2
+
+  ee.andq q5, q5, q4
+  ee.andq q6, q6, q4
+  ee.andq q7, q7, q4
   
   ee.vldbc.16.ip q0, a11, 0
   recombine_colour
@@ -965,16 +884,16 @@ cmath_eleven:
 //);
 .macro per_pixel_macro unique, bgcol_window_enable, cmath_enable, bg1_enable, bg0_enable, spr1_enable, spr0_enable
   entry sp, 64+64
-  l32r a8, .LCvector_increments
-  l32r a9, .LCmainscreen_colour
-  l32r a10, .LCsubscreen_colour
+  l32r a9, .LCsubscreen_colour
+  l32r a10, .LCmainscreen_colour
   l32r a11, .LCwindow_1_left
   l32r a12, .LCwindow_1_right
   l32r a13, .LCwindow_2_left
   l32r a14, .LCwindow_2_right
+  l32r a15, .LCvector_increments
 
   s32i.n a2, sp, 0
-  ld.qr q0, a8, 0 // load increments
+  ld.qr q0, a15, 0 // load increments
   ee.vldbc.16.ip q1, sp, 0 // broadcast x 
   ee.vadds.s16 q0, q0, q1 // x_window
   ee.vldbc.16.ip q2, a11, 0 // load window_1_left
@@ -997,15 +916,18 @@ cmath_eleven:
 .if \bgcol_window_enable
   ee.zero.q q0 // zero main_col
   ee.orq q5, q5, q6
-  ee.vldbc.16.ip q1, a10, 0 // load sub_col
+  ee.zero.q q1 // zero sub_col
   ee.andq q3, q4, q5
-  ee.vldbc.16.ip q4, a9, 0 // load main_col
 
+  ee.vldbc.16.ip q4, a9, 0 // load sub_col
+  callx8 a8 // window calc
+
+  ee.vldbc.16.ip q4, a10, 0 // load main_col
   callx8 a4 // window calc
 .else
-  ee.vldbc.16.ip q0, a9, 0 // load main_col
+  ee.vldbc.16.ip q0, a10, 0 // load main_col
   ee.orq q5, q5, q6
-  ee.vldbc.16.ip q1, a10, 0 // load sub_col
+  ee.vldbc.16.ip q1, a9, 0 // load sub_col
   ee.andq q3, q4, q5
 .endif
 
@@ -1066,9 +988,9 @@ cmath_eleven:
   .literal .LCcmath_mask_split, cmath_mask_split
   .literal .LCcmath_one, cmath_one
   .literal .LCcmath_two, cmath_two
-  .literal .LCcmath_six, cmath_six
+  .literal .LCcmath_five, cmath_five
   .literal .LCcmath_eight, cmath_eight
-  .literal .LCcmath_eleven, cmath_eleven
+  .literal .LCcmath_ten, cmath_ten
 
   .align 4
 .include "sasppu_gen.inc"
@@ -1095,60 +1017,71 @@ SASPPU_render_scanline:
   l32r a5, .LCbg0_state
   l8ui a5, a5, Background.windows
   addx4 a5, a5, a4
-  l32i.n a13, a5, 0
+  l32i.n a9, a5, 0
 
   l32r a5, .LCbg1_state
   l8ui a5, a5, Background.windows
   addx4 a5, a5, a4
-  l32i.n a14, a5, 0
+  l32i.n a10, a5, 0
 
   l32r a5, .LCbgcol_windows
   l8ui a5, a5, 0
-  addx4 a5, a5, a4
-  l32i.n a6, a5, 0
+  extui a13, a5, 0, 4
+  addx4 a13, a13, a4
+  l32i.n a8, a13, 0
+  s32i.n a8, sp, 4
+
+  extui a13, a5, 4, 4
+  slli a13, a13, 6
+  add.n a13, a13, a4
+  l32i.n a12, a13, 0
+  s32i.n a12, sp, 0
 
   l32r a4, .LCcmath_jump_table
 
   l32r a5, .LCcmath_flags
   l8ui a5, a5, 0
   addx4 a5, a5, a4
-  l32i.n a15, a5, 0
+  l32i.n a11, a5, 0
 
   l32r a4, .LCper_pixel_jump_table
+
+  mov.n a7, a2
 
   l32r a5, .LCmain_state_flags
   l8ui a5, a5, 0
   addx4 a5, a5, a4
-  l32i.n a7, a5, 0
+  l32i.n a2, a5, 0
 
-  mov.n a11, a2
-	l32r	a2, .LCcmath_one
-	l32r	a4, .LCcmath_eight
-
-  movi a10, (240 - 8)
+  movi a6, (240 - 8)
 .LCper_pixel_loop:
-  mov.n a12, a6
-  callx8 a7
+  l32i.n a8, sp, 4
+  l32i.n a12, sp, 0
+  callx4 a2
   
-  ee.vldbc.16.ip q1, a2, 0 // one
+.if REVERSE_BYTES
+	l32r a13, .LCcmath_one
+	l32r a14, .LCcmath_eight
+  ee.vldbc.16.ip q1, a13, 0 // one
   movi a5, 8
-  ee.vldbc.16.ip q2, a4, 0 // eight
+  ee.vldbc.16.ip q2, a14, 0 // eight
   wsr.sar a5
   movi a5, 0
   ee.vmul.u16 q3, q0, q1
   wsr.sar a5
   ee.vmul.u16 q4, q0, q2
   ee.orq q0, q3, q4
+.endif
 
-	slli  a5, a11, 4
-	sub	  a5, a5, a11
+	slli  a5, a7, 4
+	sub	  a5, a5, a7
 	slli	a5, a5, 4
-	add.n	a5, a5, a10
+	add.n	a5, a5, a6
 	addx2	a5, a5, a3
 
   st.qr q0, a5, 0
 
-  addi.n a10, a10, -8
-  bgez a10, .LCper_pixel_loop
+  addi.n a6, a6, -8
+  bgez a6, .LCper_pixel_loop
   
   retw.n

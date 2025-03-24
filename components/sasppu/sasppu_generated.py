@@ -20,7 +20,7 @@ def generate_window_jump_table(f):
                     str(mainwin) +
                 "\n")
 
-    f.write(".data\n") 
+    f.write(".rodata\n") 
     f.write(".align 4\n")
     f.write("window_jump_table:\n")
     for ident in idents:
@@ -52,7 +52,7 @@ def generate_sprite_jump_table(f):
                             str(flip_x) + 
                         "\n")
 
-    f.write(".data\n")  
+    f.write(".rodata\n")  
     f.write(".align 4\n")
     f.write("sprite_jump_table:\n")
     for ident in idents:
@@ -96,7 +96,7 @@ def generate_cmath_jump_table(f):
                                             str(ms_half) +
                                         "\n")
 
-    f.write(".data\n")                   
+    f.write(".rodata\n")                   
     f.write(".align 4\n")
     f.write("cmath_jump_table:\n")
     for ident in idents:
@@ -134,7 +134,7 @@ def generate_per_pixel_jump_table(f):
                                     str(spr0_enable) +
                                 "\n")
 
-    f.write(".data\n")                     
+    f.write(".rodata\n")                     
     f.write(".align 4\n")
     f.write("per_pixel_jump_table:\n")
     for ident in idents:
