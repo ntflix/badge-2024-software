@@ -8,74 +8,77 @@
 
 EXT_RAM_BSS_ATTR uint16_t SASPPU_background[BG_WIDTH * BG_HEIGHT];
 EXT_RAM_BSS_ATTR uint16_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT];
+// EXT_RAM_BSS_ATTR uint8_t SASPPU_frame_buffer[240 * 240 * 2];
 
 EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[8][240];
 
-bool SASPPU_hdma_enable;
+uint8_t SASPPU_hdma_enable;
 
 // Defined in sasppu_fast.S
 void SASPPU_render_scanline(uint8_t y, uint8_t *fb);
 
 static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
 {
-    if (SASPPU_hdma_enable)
+    for (size_t table = 0; table < SASPPU_HDMA_TABLE_COUNT; table++)
     {
-        for (int table = 0; table < SASPPU_HDMA_TABLE_COUNT; table--)
+        if (((SASPPU_hdma_enable >> table) & 1) == 0)
         {
-            HDMAEntry *entry = &SASPPU_hdma_tables[table][y];
+            continue;
+        }
 
-            if (entry->command == HDMA_WRITE_HDMA_DISABLE)
-            {
-                SASPPU_hdma_enable = false;
-                break;
-            }
+        HDMAEntry *entry = &SASPPU_hdma_tables[table][y];
 
-            switch (entry->command)
-            {
-            case HDMA_NOOP:
-            default:
-                break;
-            case HDMA_WRITE_MAIN_STATE:
-            {
-                MainState *state = &entry->data.main;
-                SASPPU_main_state_mainscreen_colour = state->mainscreen_colour;
-                SASPPU_main_state_subscreen_colour = state->subscreen_colour;
-                SASPPU_main_state_window_1_left = state->window_1_left;
-                SASPPU_main_state_window_1_right = state->window_1_right;
-                SASPPU_main_state_window_2_left = state->window_2_left;
-                SASPPU_main_state_window_2_right = state->window_2_right;
-                SASPPU_main_state_bgcol_windows = state->bgcol_windows;
-                SASPPU_main_state_flags = state->flags;
-            }
+        if (entry->command == HDMA_WRITE_HDMA_DISABLE)
+        {
+            SASPPU_hdma_enable &= ~(1 << table);
             break;
-            case HDMA_WRITE_BG0_STATE:
-            {
-                SASPPU_bg0_state = entry->data.background;
-            }
+        }
+
+        switch (entry->command)
+        {
+        case HDMA_NOOP:
+        default:
             break;
-            case HDMA_WRITE_BG1_STATE:
-            {
-                SASPPU_bg1_state = entry->data.background;
-            }
-            break;
-            case HDMA_WRITE_CMATH_STATE:
-            {
-                CMathState *state = &entry->data.cmath;
-                SASPPU_cmath_state_screen_fade = state->screen_fade;
-                SASPPU_cmath_state_flags = state->flags;
-            }
-            break;
-            case HDMA_WRITE_OAM:
-            {
-                SASPPU_oam[entry->oam_index] = entry->data.oam;
-            }
-            break;
-            }
+        case HDMA_WRITE_MAIN_STATE:
+        {
+            MainState *state = &entry->data.main;
+            SASPPU_main_state_mainscreen_colour = state->mainscreen_colour;
+            SASPPU_main_state_subscreen_colour = state->subscreen_colour;
+            SASPPU_main_state_window_1_left = state->window_1_left;
+            SASPPU_main_state_window_1_right = state->window_1_right;
+            SASPPU_main_state_window_2_left = state->window_2_left;
+            SASPPU_main_state_window_2_right = state->window_2_right;
+            SASPPU_main_state_bgcol_windows = state->bgcol_windows;
+            SASPPU_main_state_flags = state->flags;
+        }
+        break;
+        case HDMA_WRITE_BG0_STATE:
+        {
+            SASPPU_bg0_state = entry->data.background;
+        }
+        break;
+        case HDMA_WRITE_BG1_STATE:
+        {
+            SASPPU_bg1_state = entry->data.background;
+        }
+        break;
+        case HDMA_WRITE_CMATH_STATE:
+        {
+            CMathState *state = &entry->data.cmath;
+            SASPPU_cmath_state_screen_fade = state->screen_fade;
+            SASPPU_cmath_state_flags = state->flags;
+        }
+        break;
+        case HDMA_WRITE_OAM:
+        {
+            SASPPU_oam[entry->oam_index] = entry->data.oam;
+        }
+        break;
         }
     }
 
     uint32_t sprites_indcies[2] = {0, 0};
-    for (int i = 0; i < SPRITE_COUNT; i++)
+    for (size_t i = 0; i < SPRITE_COUNT; i++)
     {
         Sprite *spr = &SASPPU_oam[i];
         uint8_t flags = spr->flags;
@@ -147,7 +150,7 @@ static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
 void SASPPU_render(uint8_t *fb, uint8_t section)
 {
     // Screen is rendered top to bottom for sanity's sake
-    for (int y = 60 * section; y < 60 * (section + 1); y++)
+    for (size_t y = 60 * section; y < 60 * (section + 1); y++)
     {
         SASPPU_per_scanline(y, fb);
     }

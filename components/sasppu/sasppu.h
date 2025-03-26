@@ -85,7 +85,7 @@ extern Background SASPPU_bg0_state;
 extern Background SASPPU_bg1_state;
 extern uint8_t SASPPU_cmath_state_screen_fade;
 extern uint8_t SASPPU_cmath_state_flags;
-extern bool SASPPU_hdma_enable;
+extern uint8_t SASPPU_hdma_enable;
 
 extern Sprite SASPPU_oam[SPRITE_COUNT];
 extern uint16_t SASPPU_bg0[MAP_WIDTH * MAP_HEIGHT];
@@ -94,7 +94,7 @@ extern uint16_t SASPPU_bg1[MAP_WIDTH * MAP_HEIGHT];
 extern uint16_t SASPPU_background[BG_WIDTH * BG_HEIGHT];
 extern uint16_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT];
 
-// extern uint16_t SASPPU_frame_buffer[240 * 240];
+// extern uint8_t SASPPU_frame_buffer[240 * 240 * 2];
 
 extern Sprite *SASPPU_sprite_cache[2][SPRITE_CACHE];
 
