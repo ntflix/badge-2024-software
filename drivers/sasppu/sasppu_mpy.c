@@ -143,3 +143,5 @@ const mp_obj_module_t sasppu_module = {
 
 // Register the module to make it available in Python.
 MP_REGISTER_MODULE(MP_QSTR_sasppu, sasppu_module);
+
+// MP_REGISTER_MODULE_DELEGATION(sasppu_module, sasppu_module_attr);

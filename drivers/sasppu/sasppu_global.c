@@ -24,6 +24,7 @@ static void sasppu_global_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
         {
         case MP_QSTR_main_state:
             dest[0] = mp_obj_malloc(sasppu_main_state_t, &sasppu_type_main_state);
+            ((sasppu_main_state_t *)dest[0])->bgcol_windows = mp_obj_malloc(sasppu_windows_t, &sasppu_type_windows);
             sasppu_main_state_from_struct(dest[0], SASPPU_raise_main_state());
             break;
         case MP_QSTR_cmath_state:
@@ -32,10 +33,12 @@ static void sasppu_global_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             break;
         case MP_QSTR_bg0_state:
             dest[0] = mp_obj_malloc(sasppu_background_t, &sasppu_type_background);
+            ((sasppu_background_t *)dest[0])->windows = mp_obj_malloc(sasppu_windows_t, &sasppu_type_windows);
             sasppu_background_from_struct(dest[0], SASPPU_bg0_state);
             break;
         case MP_QSTR_bg1_state:
             dest[0] = mp_obj_malloc(sasppu_background_t, &sasppu_type_background);
+            ((sasppu_background_t *)dest[0])->windows = mp_obj_malloc(sasppu_windows_t, &sasppu_type_windows);
             sasppu_background_from_struct(dest[0], SASPPU_bg1_state);
             break;
         default:

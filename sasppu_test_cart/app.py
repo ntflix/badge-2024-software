@@ -35,7 +35,7 @@ class SASPPUTest(SASPPUApp):
         gl = sasppu.Global()
         ms = gl.main_state
         ms.mainscreen_colour = WHITE
-        ms.bgcol_windows = sasppu.MainState.WINDOW_A
+        ms.bgcol_windows = sasppu.Windows.A
         ms.flags = sasppu.MainState.CMATH_ENABLE
         #ms.window_1_left = int((math.sin(cur_time / 1300.0) + 1) * 64)
         #ms.window_1_right = int((math.cos(cur_time / 1500.0) + 3) * 64)
