@@ -32,13 +32,18 @@ class SASPPUTest(SASPPUApp):
 
     def draw(self):
         cur_time = time.ticks_ms()
-        sasppu.sasppuinternal_main_state_mainscreen_colour(WHITE)
-        sasppu.sasppuinternal_main_state_bgcol_windows(sasppu.WINDOW_A)
-        sasppu.sasppuinternal_main_state_flags(sasppu.MAIN_CMATH_ENABLE)
-        sasppu.sasppuinternal_cmath_state_flags(sasppu.CMATH_FADE_ENABLE)
-        sasppu.sasppuinternal_cmath_state_screen_fade(int((math.sin(cur_time / 1000.0) + 1) * 127))
-        #sasppu.sasppuinternal_main_state_window_1_left(int((math.sin(cur_time / 1300.0) + 1) * 64))
-        #sasppu.sasppuinternal_main_state_window_1_right(int((math.cos(cur_time / 1500.0) + 3) * 64))
+        gl = sasppu.Global()
+        ms = gl.main_state
+        ms.mainscreen_colour = WHITE
+        ms.bgcol_windows = sasppu.MainState.WINDOW_A
+        ms.flags = sasppu.MainState.CMATH_ENABLE
+        #ms.window_1_left = int((math.sin(cur_time / 1300.0) + 1) * 64)
+        #ms.window_1_right = int((math.cos(cur_time / 1500.0) + 3) * 64)
+        gl.main_state = ms
+        cs = gl.cmath_state
+        cs.flags = sasppu.CMathState.FADE_ENABLE
+        cs.fade = int((math.sin(cur_time / 1000.0) + 1) * 127)
+        gl.cmath_state = cs
         print("fps:", display.get_fps())
 
     def _handle_buttondown(self, event: ButtonDownEvent):

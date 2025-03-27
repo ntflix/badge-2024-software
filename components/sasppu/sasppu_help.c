@@ -358,6 +358,44 @@ SASPPUImageCode SASPPU_draw_text_next_background(size_t *x, size_t *y, uint16_t 
     return SASPPU_draw_text_next(x, y, colour, line_start, line_width, newline_height, double_size, text, SASPPU_background, BG_WIDTH, BG_HEIGHT);
 }
 
+void SASPPU_lower_main_state(MainState ms)
+{
+    SASPPU_main_state_bgcol_windows = ms.bgcol_windows;
+    SASPPU_main_state_mainscreen_colour = ms.mainscreen_colour;
+    SASPPU_main_state_subscreen_colour = ms.subscreen_colour;
+    SASPPU_main_state_window_1_left = ms.window_1_left;
+    SASPPU_main_state_window_1_right = ms.window_1_right;
+    SASPPU_main_state_window_2_left = ms.window_2_left;
+    SASPPU_main_state_window_2_right = ms.window_2_right;
+    SASPPU_main_state_flags = ms.flags;
+}
+MainState SASPPU_raise_main_state()
+{
+    MainState ms;
+    ms.bgcol_windows = SASPPU_main_state_bgcol_windows;
+    ms.mainscreen_colour = SASPPU_main_state_mainscreen_colour;
+    ms.subscreen_colour = SASPPU_main_state_subscreen_colour;
+    ms.window_1_left = SASPPU_main_state_window_1_left;
+    ms.window_1_right = SASPPU_main_state_window_1_right;
+    ms.window_2_left = SASPPU_main_state_window_2_left;
+    ms.window_2_right = SASPPU_main_state_window_2_right;
+    ms.flags = SASPPU_main_state_flags;
+    return ms;
+}
+
+void SASPPU_lower_cmath_state(CMathState cs)
+{
+    SASPPU_cmath_state_flags = cs.flags;
+    SASPPU_cmath_state_screen_fade = cs.screen_fade;
+}
+CMathState SASPPU_raise_cmath_state()
+{
+    CMathState cs;
+    cs.flags = SASPPU_cmath_state_flags;
+    cs.screen_fade = SASPPU_cmath_state_screen_fade;
+    return cs;
+}
+
 void SASPPU_gfx_reset()
 {
     SASPPU_main_state_mainscreen_colour = 0x0000;

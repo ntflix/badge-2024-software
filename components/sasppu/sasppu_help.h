@@ -44,8 +44,8 @@
         SASPPU_MUL_CHANNEL((SASPPU_B_CHANNEL((_col))),(_mul)) \
     ); })
 
-#define SASPPU_TRANSPARENT_BLACK (0)
-#define SASPPU_OPAQUE_BLACK (1)
+#define SASPPU_TRANSPARENT_BLACK (SASPPU_RGB555(0, 0, 0))
+#define SASPPU_OPAQUE_BLACK (SASPPU_RGB555(1, 0, 0))
 #define SASPPU_RED (SASPPU_RGB555(31, 0, 0))
 #define SASPPU_GREEN (SASPPU_RGB555(0, 31, 0))
 #define SASPPU_BLUE (SASPPU_RGB555(0, 0, 31))
@@ -82,6 +82,11 @@ SASPPUImageCode SASPPU_compressed_background_transparent(size_t x, size_t y, siz
 SASPPUImageCode SASPPU_fill_background(size_t x, size_t y, size_t width, size_t height, uint16_t colour);
 SASPPUImageCode SASPPU_draw_text_background(size_t x, size_t y, uint16_t colour, size_t line_width, size_t newline_height, bool double_size, const char *text);
 SASPPUImageCode SASPPU_draw_text_next_background(size_t *x, size_t *y, uint16_t colour, size_t line_start, size_t line_width, size_t newline_height, bool double_size, const char **text);
+
+void SASPPU_lower_main_state(MainState ms);
+MainState SASPPU_raise_main_state();
+void SASPPU_lower_cmath_state(CMathState cs);
+CMathState SASPPU_raise_cmath_state();
 
 void SASPPU_gfx_reset();
 
