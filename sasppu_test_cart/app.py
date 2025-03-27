@@ -20,6 +20,10 @@ class SASPPUTest(SASPPUApp):
         self.request_fast_updates = True
         eventbus.on(ButtonDownEvent, self._handle_buttondown, self)
         self.exit = False
+        self.ms = sasppu.MainState()
+        self.ms.bind()
+        self.cs = sasppu.CMathState()
+        self.cs.bind()
 
     def _cleanup(self):
         eventbus.remove(ButtonDownEvent, self._handle_buttondown, self)
@@ -32,18 +36,13 @@ class SASPPUTest(SASPPUApp):
 
     def draw(self):
         cur_time = time.ticks_ms()
-        gl = sasppu.Global()
-        ms = gl.main_state
-        ms.mainscreen_colour = WHITE
-        ms.bgcol_windows = sasppu.Windows.A
-        ms.flags = sasppu.MainState.CMATH_ENABLE
+        self.ms.mainscreen_colour = WHITE
+        self.ms.bgcol_windows = sasppu.WINDOW_A
+        self.ms.flags = sasppu.MainState.CMATH_ENABLE
         #ms.window_1_left = int((math.sin(cur_time / 1300.0) + 1) * 64)
         #ms.window_1_right = int((math.cos(cur_time / 1500.0) + 3) * 64)
-        gl.main_state = ms
-        cs = gl.cmath_state
-        cs.flags = sasppu.CMathState.FADE_ENABLE
-        cs.fade = int((math.sin(cur_time / 1000.0) + 1) * 127)
-        gl.cmath_state = cs
+        self.cs.flags = sasppu.CMathState.FADE_ENABLE
+        self.cs.fade = int((math.sin(cur_time / 1000.0) + 1) * 127)
         print("fps:", display.get_fps())
 
     def _handle_buttondown(self, event: ButtonDownEvent):

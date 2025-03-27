@@ -419,6 +419,8 @@ void SASPPU_gfx_reset()
     SASPPU_cmath_state_flags = 0;
     SASPPU_hdma_enable = 0;
 
+    memset(SASPPU_oam, 0, sizeof(SASPPU_oam));
+
     for (size_t i = 0; i < SPRITE_COUNT; i++)
     {
         SASPPU_oam[i].x = 0;

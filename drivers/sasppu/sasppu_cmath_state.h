@@ -12,13 +12,10 @@
 typedef struct
 {
     mp_obj_base_t base;
-    mp_uint_t fade;
-    mp_uint_t flags;
+    CMathState dat;
+    bool bound;
 } sasppu_cmath_state_t;
 
 extern const mp_obj_type_t sasppu_type_cmath_state;
 
 mp_obj_t sasppu_cmath_state_default(mp_obj_t self_in);
-
-mp_obj_t sasppu_cmath_state_from_struct(mp_obj_t self_in, CMathState cs);
-CMathState sasppu_cmath_state_to_struct(mp_obj_t self_in);

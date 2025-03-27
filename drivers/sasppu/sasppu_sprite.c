@@ -1,54 +1,26 @@
 // Include the header file to get access to the MicroPython API
 #include "sasppu_sprite.h"
+#include <string.h>
 
 mp_obj_t sasppu_sprite_default(mp_obj_t self_in)
 {
     sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
-    sasppu_windows_default(self->windows);
-    self->x = 0;
-    self->y = 0;
-    self->width = 32;
-    self->height = 32;
-    self->graphics_x = 0;
-    self->graphics_y = 0;
-    self->flags = 0;
+    memset(&self->dat, 0, sizeof(Sprite));
+    self->dat.x = 0;
+    self->dat.y = 0;
+    self->dat.width = 32;
+    self->dat.height = 32;
+    self->dat.graphics_x = 0;
+    self->dat.graphics_y = 0;
+    self->dat.flags = 0;
+    self->dat.windows = 0xFF;
+    self->bound = -1;
     return mp_const_none;
-}
-
-mp_obj_t sasppu_sprite_from_struct(mp_obj_t self_in, Sprite s)
-{
-    sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
-    sasppu_windows_from_int(self->windows, s.windows);
-    self->x = s.x;
-    self->y = s.y;
-    self->width = s.width;
-    self->height = s.height;
-    self->graphics_x = s.graphics_x;
-    self->graphics_y = s.graphics_y;
-    self->flags = s.flags;
-    return mp_const_none;
-}
-
-Sprite sasppu_sprite_to_struct(mp_obj_t self_in)
-{
-    sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
-    Sprite s;
-    s.windows = sasppu_windows_to_int(self->windows);
-    s.x = self->x;
-    s.y = self->y;
-    s.width = self->width;
-    s.height = self->height;
-    s.graphics_x = self->graphics_x;
-    s.graphics_y = self->graphics_y;
-    s.flags = self->flags;
-    return s;
 }
 
 static mp_obj_t sasppu_sprite_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args_in)
 {
     sasppu_sprite_t *o = mp_obj_malloc(sasppu_sprite_t, type);
-
-    o->windows = mp_obj_malloc(sasppu_windows_t, &sasppu_type_windows);
 
     sasppu_sprite_default(MP_OBJ_FROM_PTR(o));
 
@@ -58,21 +30,20 @@ static mp_obj_t sasppu_sprite_make_new(const mp_obj_type_t *type, size_t n_args,
 static mp_obj_t sasppu_sprite_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in)
 {
     sasppu_sprite_t *self = MP_OBJ_TO_PTR(lhs_in);
+    if (self->bound >= 0)
+    {
+        self->dat = SASPPU_oam[self->bound];
+    }
     sasppu_sprite_t *other = MP_OBJ_TO_PTR(rhs_in);
+    if (other->bound >= 0)
+    {
+        other->dat = SASPPU_oam[other->bound];
+    }
     switch (op)
     {
     case MP_BINARY_OP_EQUAL:
     {
-        bool same = true;
-        same &= (self->x == other->x);
-        same &= (self->y == other->y);
-        same &= (self->width == other->width);
-        same &= (self->height == other->height);
-        same &= (self->graphics_x == other->graphics_x);
-        same &= (self->graphics_y == other->graphics_y);
-        same &= (self->flags == other->flags);
-        same &= (mp_obj_equal(self->windows, other->windows));
-        return same ? mp_const_true : mp_const_false;
+        return memcmp(&self->dat, &other->dat, sizeof(Sprite)) ? mp_const_true : mp_const_false;
     }
     default:
         // op not supported
@@ -83,34 +54,44 @@ static mp_obj_t sasppu_sprite_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
 static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
     sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound >= 0)
+    {
+        self->dat = SASPPU_oam[self->bound];
+    }
     if (dest[0] == MP_OBJ_NULL)
     {
         // Load attribute.
         switch (attr)
         {
         case MP_QSTR_x:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->x);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.x);
             break;
         case MP_QSTR_y:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->y);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.y);
             break;
         case MP_QSTR_width:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->width);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.width);
             break;
         case MP_QSTR_height:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->height);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.height);
             break;
         case MP_QSTR_graphics_x:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->graphics_x);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.graphics_x);
             break;
         case MP_QSTR_graphics_y:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->graphics_y);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.graphics_y);
             break;
         case MP_QSTR_windows:
-            dest[0] = self->windows;
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.windows);
+            break;
+        case MP_QSTR_window_1:
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.windows & 0x0F);
+            break;
+        case MP_QSTR_window_2:
+            dest[0] = MP_OBJ_NEW_SMALL_INT((self->dat.windows >> 4) & 0x0F);
             break;
         case MP_QSTR_flags:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->flags);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.flags);
             break;
         default:
             dest[1] = MP_OBJ_SENTINEL;
@@ -130,7 +111,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->x = val;
+                self->dat.x = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -141,7 +122,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->y = val;
+                self->dat.y = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -156,7 +137,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->width = val;
+                self->dat.width = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -167,7 +148,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->height = val;
+                self->dat.height = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -182,7 +163,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->graphics_x = val;
+                self->dat.graphics_x = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -193,13 +174,44 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->graphics_y = val;
+                self->dat.graphics_y = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
         case MP_QSTR_windows:
-            sasppu_windows_from_int(self->windows, val);
-            dest[0] = MP_OBJ_NULL;
+            if ((val < 0) || (val > 0xFF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Windows out of bounds"));
+            }
+            else
+            {
+                self->dat.windows = val;
+                dest[0] = MP_OBJ_NULL;
+            }
+            break;
+        case MP_QSTR_window_1:
+            if ((val < 0) || (val > 0xF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Window out of bounds"));
+            }
+            else
+            {
+                self->dat.windows &= 0xF0;
+                self->dat.windows |= val;
+                dest[0] = MP_OBJ_NULL;
+            }
+            break;
+        case MP_QSTR_window_2:
+            if ((val < 0) || (val > 0xF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Window out of bounds"));
+            }
+            else
+            {
+                self->dat.windows &= 0x0F;
+                self->dat.windows |= val << 4;
+                dest[0] = MP_OBJ_NULL;
+            }
             break;
         case MP_QSTR_flags:
             if ((val < 0) || (val > 0xFF))
@@ -208,7 +220,7 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->flags = val;
+                self->dat.flags = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -216,9 +228,76 @@ static void sasppu_sprite_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             break;
         }
     }
+    if (self->bound >= 0)
+    {
+        SASPPU_oam[self->bound] = self->dat;
+    }
 }
 
+static mp_obj_t sasppu_sprite_unbind(mp_obj_t self_in)
+{
+    sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound >= 0)
+    {
+        self->dat = SASPPU_oam[self->bound];
+    }
+    self->bound = -1;
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(sasppu_sprite_unbind_obj, sasppu_sprite_unbind);
+
+static mp_obj_t sasppu_sprite_bind(size_t n_args, const mp_obj_t *args)
+{
+    bool flush = true;
+    if (n_args == 3)
+    {
+        flush = mp_obj_is_true(args[2]);
+    }
+    sasppu_sprite_t *self = MP_OBJ_TO_PTR(args[0]);
+    mp_int_t bind_point = mp_obj_get_int(args[1]);
+    if (bind_point < 0)
+    {
+        sasppu_sprite_unbind(args[0]);
+        return mp_const_none;
+    }
+    if (bind_point > 0xFF)
+    {
+        mp_raise_ValueError(MP_ERROR_TEXT("Bind point out of bounds"));
+        return mp_const_none;
+    }
+    if (self->bound >= 0)
+    {
+        sasppu_sprite_unbind(args[0]);
+    }
+    self->bound = bind_point;
+    if (flush)
+    {
+        SASPPU_oam[bind_point] = self->dat;
+    }
+    else
+    {
+        self->dat = SASPPU_oam[bind_point];
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_sprite_bind_obj, 2, 3, sasppu_sprite_bind);
+
+static mp_obj_t sasppu_sprite_get_bind_point(mp_obj_t self_in)
+{
+    sasppu_sprite_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound < 0)
+    {
+        return mp_const_none;
+    }
+    return MP_OBJ_NEW_SMALL_INT(self->bound);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(sasppu_sprite_get_bind_point_obj, sasppu_sprite_get_bind_point);
+
 static const mp_rom_map_elem_t sasppu_sprite_locals_dict_table[] = {
+    {MP_ROM_QSTR(MP_QSTR_bind), MP_ROM_PTR(&sasppu_sprite_bind_obj)},
+    {MP_ROM_QSTR(MP_QSTR_unbind), MP_ROM_PTR(&sasppu_sprite_unbind_obj)},
+    {MP_ROM_QSTR(MP_QSTR_get_bind_point), MP_ROM_PTR(&sasppu_sprite_get_bind_point_obj)},
+
     {MP_ROM_QSTR(MP_QSTR_WIDTH_POWER), MP_ROM_INT(SPR_WIDTH_POWER)},
     {MP_ROM_QSTR(MP_QSTR_HEIGHT_POWER), MP_ROM_INT(SPR_HEIGHT_POWER)},
     {MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(SPR_WIDTH)},

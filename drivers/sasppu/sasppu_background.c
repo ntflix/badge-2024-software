@@ -1,42 +1,22 @@
 // Include the header file to get access to the MicroPython API
 #include "sasppu_background.h"
+#include <string.h>
 
 mp_obj_t sasppu_background_default(mp_obj_t self_in)
 {
     sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
-    sasppu_windows_default(self->windows);
-    self->x = 0;
-    self->y = 0;
-    self->flags = 0;
+    memset(&self->dat, 0, sizeof(Background));
+    self->dat.x = 0;
+    self->dat.y = 0;
+    self->dat.windows = 0xFF;
+    self->dat.flags = 0;
+    self->bound = -1;
     return mp_const_none;
-}
-
-mp_obj_t sasppu_background_from_struct(mp_obj_t self_in, Background bg)
-{
-    sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
-    sasppu_windows_from_int(self->windows, bg.windows);
-    self->x = bg.x;
-    self->y = bg.y;
-    self->flags = bg.flags;
-    return mp_const_none;
-}
-
-Background sasppu_background_to_struct(mp_obj_t self_in)
-{
-    sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
-    Background bg;
-    bg.windows = sasppu_windows_to_int(self->windows);
-    bg.x = self->x;
-    bg.y = self->y;
-    bg.flags = self->flags;
-    return bg;
 }
 
 static mp_obj_t sasppu_background_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args_in)
 {
     sasppu_background_t *o = mp_obj_malloc(sasppu_background_t, type);
-
-    o->windows = mp_obj_malloc(sasppu_windows_t, &sasppu_type_windows);
 
     sasppu_background_default(MP_OBJ_FROM_PTR(o));
 
@@ -46,17 +26,28 @@ static mp_obj_t sasppu_background_make_new(const mp_obj_type_t *type, size_t n_a
 static mp_obj_t sasppu_background_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in)
 {
     sasppu_background_t *self = MP_OBJ_TO_PTR(lhs_in);
+    if (self->bound == 0)
+    {
+        self->dat = SASPPU_bg0_state;
+    }
+    else if (self->bound == 1)
+    {
+        self->dat = SASPPU_bg1_state;
+    }
     sasppu_background_t *other = MP_OBJ_TO_PTR(rhs_in);
+    if (other->bound == 0)
+    {
+        other->dat = SASPPU_bg0_state;
+    }
+    else if (other->bound == 1)
+    {
+        other->dat = SASPPU_bg1_state;
+    }
     switch (op)
     {
     case MP_BINARY_OP_EQUAL:
     {
-        bool same = true;
-        same &= (self->x == other->x);
-        same &= (self->y == other->y);
-        same &= (self->flags == other->flags);
-        same &= (mp_obj_equal(self->windows, other->windows));
-        return same ? mp_const_true : mp_const_false;
+        return memcmp(&self->dat, &other->dat, sizeof(Background)) ? mp_const_true : mp_const_false;
     }
     default:
         // op not supported
@@ -67,22 +58,36 @@ static mp_obj_t sasppu_background_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, 
 static void sasppu_background_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
     sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound == 0)
+    {
+        self->dat = SASPPU_bg0_state;
+    }
+    else if (self->bound == 1)
+    {
+        self->dat = SASPPU_bg1_state;
+    }
     if (dest[0] == MP_OBJ_NULL)
     {
         // Load attribute.
         switch (attr)
         {
         case MP_QSTR_x:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->x);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.x);
             break;
         case MP_QSTR_y:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->y);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.y);
             break;
         case MP_QSTR_windows:
-            dest[0] = self->windows;
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.windows);
+            break;
+        case MP_QSTR_window_1:
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.windows & 0x0F);
+            break;
+        case MP_QSTR_window_2:
+            dest[0] = MP_OBJ_NEW_SMALL_INT((self->dat.windows >> 4) & 0x0F);
             break;
         case MP_QSTR_flags:
-            dest[0] = MP_OBJ_NEW_SMALL_INT(self->flags);
+            dest[0] = MP_OBJ_NEW_SMALL_INT(self->dat.flags);
             break;
         default:
             dest[1] = MP_OBJ_SENTINEL;
@@ -102,7 +107,7 @@ static void sasppu_background_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->x = val;
+                self->dat.x = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -113,13 +118,44 @@ static void sasppu_background_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->y = val;
+                self->dat.y = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
         case MP_QSTR_windows:
-            sasppu_windows_from_int(self->windows, val);
-            dest[0] = MP_OBJ_NULL;
+            if ((val < 0) || (val > 0xFF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Windows out of bounds"));
+            }
+            else
+            {
+                self->dat.windows = val;
+                dest[0] = MP_OBJ_NULL;
+            }
+            break;
+        case MP_QSTR_window_1:
+            if ((val < 0) || (val > 0xF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Window out of bounds"));
+            }
+            else
+            {
+                self->dat.windows &= 0xF0;
+                self->dat.windows |= val;
+                dest[0] = MP_OBJ_NULL;
+            }
+            break;
+        case MP_QSTR_window_2:
+            if ((val < 0) || (val > 0xF))
+            {
+                mp_raise_ValueError(MP_ERROR_TEXT("Window out of bounds"));
+            }
+            else
+            {
+                self->dat.windows &= 0x0F;
+                self->dat.windows |= (val << 4);
+                dest[0] = MP_OBJ_NULL;
+            }
             break;
         case MP_QSTR_flags:
             if ((val < 0) || (val > 0xFF))
@@ -128,7 +164,7 @@ static void sasppu_background_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             }
             else
             {
-                self->flags = val;
+                self->dat.flags = val;
                 dest[0] = MP_OBJ_NULL;
             }
             break;
@@ -136,9 +172,98 @@ static void sasppu_background_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
             break;
         }
     }
+    if (self->bound == 0)
+    {
+        SASPPU_bg0_state = self->dat;
+    }
+    else if (self->bound == 1)
+    {
+        SASPPU_bg1_state = self->dat;
+    }
 }
 
+static mp_obj_t sasppu_background_unbind(mp_obj_t self_in)
+{
+    sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound == 0)
+    {
+        self->dat = SASPPU_bg0_state;
+    }
+    else if (self->bound == 1)
+    {
+        self->dat = SASPPU_bg1_state;
+    }
+    self->bound = -1;
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(sasppu_background_unbind_obj, sasppu_background_unbind);
+
+static mp_obj_t sasppu_background_bind(size_t n_args, const mp_obj_t *args)
+{
+    bool flush = true;
+    if (n_args == 3)
+    {
+        flush = mp_obj_is_true(args[2]);
+    }
+    sasppu_background_t *self = MP_OBJ_TO_PTR(args[0]);
+    mp_int_t bind_point = mp_obj_get_int(args[1]);
+    if (bind_point < 0)
+    {
+        sasppu_background_unbind(args[0]);
+        return mp_const_none;
+    }
+    if (bind_point > 1)
+    {
+        mp_raise_ValueError(MP_ERROR_TEXT("Bind point out of bounds"));
+        return mp_const_none;
+    }
+    if (self->bound >= 0)
+    {
+        sasppu_background_unbind(args[0]);
+    }
+    self->bound = bind_point;
+    if (flush)
+    {
+        if (bind_point == 0)
+        {
+            SASPPU_bg0_state = self->dat;
+        }
+        else if (bind_point == 1)
+        {
+            SASPPU_bg1_state = self->dat;
+        }
+    }
+    else
+    {
+        if (bind_point == 0)
+        {
+            self->dat = SASPPU_bg0_state;
+        }
+        else if (bind_point == 1)
+        {
+            self->dat = SASPPU_bg1_state;
+        }
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_background_bind_obj, 2, 3, sasppu_background_bind);
+
+static mp_obj_t sasppu_background_get_bind_point(mp_obj_t self_in)
+{
+    sasppu_background_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->bound < 0)
+    {
+        return mp_const_none;
+    }
+    return MP_OBJ_NEW_SMALL_INT(self->bound);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(sasppu_background_get_bind_point_obj, sasppu_background_get_bind_point);
+
 static const mp_rom_map_elem_t sasppu_background_locals_dict_table[] = {
+    {MP_ROM_QSTR(MP_QSTR_bind), MP_ROM_PTR(&sasppu_background_bind_obj)},
+    {MP_ROM_QSTR(MP_QSTR_unbind), MP_ROM_PTR(&sasppu_background_unbind_obj)},
+    {MP_ROM_QSTR(MP_QSTR_get_bind_point), MP_ROM_PTR(&sasppu_background_get_bind_point_obj)},
+
     {MP_ROM_QSTR(MP_QSTR_WIDTH_POWER), MP_ROM_INT(BG_WIDTH_POWER)},
     {MP_ROM_QSTR(MP_QSTR_HEIGHT_POWER), MP_ROM_INT(BG_HEIGHT_POWER)},
     {MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(BG_WIDTH)},
