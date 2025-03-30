@@ -33,7 +33,7 @@ class SASPPUTest(SASPPUApp):
         for x in range(sasppu.MAP_WIDTH):
             for y in range(sasppu.MAP_HEIGHT):
                 index = ((y % 32) * 256 * 8) + ((x % 32) * 8)
-                sasppu.sasppuinternal_bg0_map(x, y, index)
+                sasppu.bg0[y * sasppu.MAP_WIDTH + x] = index
 
     def _cleanup(self):
         eventbus.remove(ButtonDownEvent, self._handle_buttondown, self)
