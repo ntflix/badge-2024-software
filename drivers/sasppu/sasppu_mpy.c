@@ -14,62 +14,10 @@
 #include "sasppu_main_state.h"
 #include "sasppu_sprite.h"
 
-static mp_obj_t oam_accessor(size_t n_args, const mp_obj_t *args)
-{
-    if (n_args > 1)
-    {
-        mp_int_t index = mp_obj_get_int(args[0]);
-        sasppu_sprite_t *value = MP_OBJ_TO_PTR(args[1]);
-        SASPPU_oam[index] = value->dat;
-        return mp_const_none;
-    }
-    else
-    {
-        mp_int_t index = mp_obj_get_int(args[0]);
-        sasppu_sprite_t *value = mp_obj_malloc(sasppu_sprite_t, &sasppu_type_sprite);
-        value->dat = SASPPU_oam[index];
-        value->bound = index;
-        return MP_OBJ_FROM_PTR(value);
-    }
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(oam_obj, 1, 2, oam_accessor);
+#include "sasppu_oam.h"
+#include "sasppu_map.h"
 
-static mp_obj_t bg0_map_accessor(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t index_x = mp_obj_get_int(args[0]);
-    mp_int_t index_y = mp_obj_get_int(args[1]);
-    mp_int_t index = index_y * MAP_WIDTH + index_x;
-    if (n_args == 3)
-    {
-        SASPPU_bg0[index] = mp_obj_get_int(args[2]);
-        return mp_const_none;
-    }
-    else if (n_args == 2)
-    {
-        return MP_OBJ_NEW_SMALL_INT(SASPPU_bg0[index]);
-    }
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(bg0_map_obj, 2, 3, bg0_map_accessor);
-
-static mp_obj_t bg1_map_accessor(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t index_x = mp_obj_get_int(args[0]);
-    mp_int_t index_y = mp_obj_get_int(args[1]);
-    mp_int_t index = index_y * MAP_WIDTH + index_x;
-    if (n_args == 3)
-    {
-        SASPPU_bg1[index] = mp_obj_get_int(args[2]);
-        return mp_const_none;
-    }
-    else if (n_args == 2)
-    {
-        return MP_OBJ_NEW_SMALL_INT(SASPPU_bg1[index]);
-    }
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(bg1_map_obj, 2, 3, bg1_map_accessor);
+#include "sasppu_mpy_help.h"
 
 static mp_obj_t init(void)
 {
@@ -78,155 +26,30 @@ static mp_obj_t init(void)
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(init_obj, init);
 
-static mp_obj_t sasppu_copy_sprite(size_t n_args, const mp_obj_t *args)
+void sasppu_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
-    mp_int_t dst_x = mp_obj_get_int(args[0]);
-    mp_int_t dst_y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t src_x = mp_obj_get_int(args[4]);
-    mp_int_t src_y = mp_obj_get_int(args[5]);
-    bool double_size = false;
-    if (n_args == 7)
+    if (dest[0] == MP_OBJ_NULL)
     {
-        double_size = mp_obj_is_true(args[6]);
+        // Load attribute.
+        switch (attr)
+        {
+        case MP_QSTR_oam:
+            dest[0] = mp_obj_malloc(sasppu_oam_t, &sasppu_type_oam);
+            break;
+        case MP_QSTR_bg0:
+            dest[0] = mp_obj_malloc(sasppu_map_t, &sasppu_type_map);
+            ((sasppu_map_t *)MP_OBJ_TO_PTR(dest[0]))->bg = 0;
+            break;
+        case MP_QSTR_bg1:
+            dest[0] = mp_obj_malloc(sasppu_map_t, &sasppu_type_map);
+            ((sasppu_map_t *)MP_OBJ_TO_PTR(dest[0]))->bg = 1;
+            break;
+        default:
+            dest[1] = MP_OBJ_SENTINEL;
+            break;
+        }
     }
-    SASPPUImageCode res = SASPPU_copy_sprite(dst_x, dst_y, width, height, src_x, src_y, double_size);
-    return MP_OBJ_NEW_SMALL_INT(res);
 }
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_copy_sprite_obj, 6, 7, sasppu_copy_sprite);
-
-static mp_obj_t sasppu_copy_sprite_transparent(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t dst_x = mp_obj_get_int(args[0]);
-    mp_int_t dst_y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t src_x = mp_obj_get_int(args[4]);
-    mp_int_t src_y = mp_obj_get_int(args[5]);
-    bool double_size = false;
-    if (n_args == 7)
-    {
-        double_size = mp_obj_is_true(args[6]);
-    }
-    SASPPUImageCode res = SASPPU_copy_sprite_transparent(dst_x, dst_y, width, height, src_x, src_y, double_size);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_copy_sprite_transparent_obj, 6, 7, sasppu_copy_sprite_transparent);
-
-static mp_obj_t sasppu_fill_sprite(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t x = mp_obj_get_int(args[0]);
-    mp_int_t y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t colour = mp_obj_get_int(args[4]);
-    SASPPUImageCode res = SASPPU_fill_sprite(x, y, width, height, colour);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_fill_sprite_obj, 5, 5, sasppu_fill_sprite);
-
-static mp_obj_t sasppu_draw_text_sprite(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t x = mp_obj_get_int(args[0]);
-    mp_int_t y = mp_obj_get_int(args[1]);
-    mp_int_t colour = mp_obj_get_int(args[2]);
-    mp_int_t line_width = mp_obj_get_int(args[3]);
-    mp_check_self(mp_obj_is_str_or_bytes(args[4]));
-    GET_STR_DATA_LEN(args[4], text, text_len);
-    mp_int_t newline_height = 10;
-    bool double_size = false;
-    if (n_args == 6)
-    {
-        double_size = mp_obj_is_true(args[5]);
-    }
-    if (n_args == 7)
-    {
-        newline_height = mp_obj_get_int(args[6]);
-    }
-    SASPPUImageCode res = SASPPU_draw_text_sprite(x, y, colour, line_width, newline_height, double_size, (const char *)text);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_draw_text_sprite_obj, 5, 7, sasppu_draw_text_sprite);
-
-static mp_obj_t sasppu_copy_background(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t dst_x = mp_obj_get_int(args[0]);
-    mp_int_t dst_y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t src_x = mp_obj_get_int(args[4]);
-    mp_int_t src_y = mp_obj_get_int(args[5]);
-    bool double_size = false;
-    if (n_args == 7)
-    {
-        double_size = mp_obj_is_true(args[6]);
-    }
-    SASPPUImageCode res = SASPPU_copy_background(dst_x, dst_y, width, height, src_x, src_y, double_size);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_copy_background_obj, 6, 7, sasppu_copy_background);
-
-static mp_obj_t sasppu_copy_background_transparent(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t dst_x = mp_obj_get_int(args[0]);
-    mp_int_t dst_y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t src_x = mp_obj_get_int(args[4]);
-    mp_int_t src_y = mp_obj_get_int(args[5]);
-    bool double_size = false;
-    if (n_args == 7)
-    {
-        double_size = mp_obj_is_true(args[6]);
-    }
-    SASPPUImageCode res = SASPPU_copy_background_transparent(dst_x, dst_y, width, height, src_x, src_y, double_size);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_copy_background_transparent_obj, 6, 7, sasppu_copy_background_transparent);
-
-static mp_obj_t sasppu_fill_background(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t x = mp_obj_get_int(args[0]);
-    mp_int_t y = mp_obj_get_int(args[1]);
-    mp_int_t width = mp_obj_get_int(args[2]);
-    mp_int_t height = mp_obj_get_int(args[3]);
-    mp_int_t colour = mp_obj_get_int(args[4]);
-    SASPPUImageCode res = SASPPU_fill_background(x, y, width, height, colour);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_fill_background_obj, 5, 5, sasppu_fill_background);
-
-static mp_obj_t sasppu_draw_text_background(size_t n_args, const mp_obj_t *args)
-{
-    mp_int_t x = mp_obj_get_int(args[0]);
-    mp_int_t y = mp_obj_get_int(args[1]);
-    mp_int_t colour = mp_obj_get_int(args[2]);
-    mp_int_t line_width = mp_obj_get_int(args[3]);
-    mp_check_self(mp_obj_is_str_or_bytes(args[4]));
-    GET_STR_DATA_LEN(args[4], text, text_len);
-    mp_int_t newline_height = 10;
-    bool double_size = false;
-    if (n_args == 6)
-    {
-        double_size = mp_obj_is_true(args[5]);
-    }
-    if (n_args == 7)
-    {
-        newline_height = mp_obj_get_int(args[6]);
-    }
-    SASPPUImageCode res = SASPPU_draw_text_background(x, y, colour, line_width, newline_height, double_size, (const char *)text);
-    return MP_OBJ_NEW_SMALL_INT(res);
-}
-
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_draw_text_background_obj, 5, 7, sasppu_draw_text_background);
 
 // Define all attributes of the module.
 // Table entries are key/value pairs of the attribute name (a string)
@@ -241,10 +64,6 @@ static const mp_rom_map_elem_t sasppu_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_Sprite), MP_ROM_PTR(&sasppu_type_sprite)},
     {MP_ROM_QSTR(MP_QSTR_CMathState), MP_ROM_PTR(&sasppu_type_cmath_state)},
     {MP_ROM_QSTR(MP_QSTR_MainState), MP_ROM_PTR(&sasppu_type_main_state)},
-
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_oam), MP_ROM_PTR(&oam_obj)},
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg0_map), MP_ROM_PTR(&bg0_map_obj)},
-    {MP_ROM_QSTR(MP_QSTR_sasppuinternal_bg1_map), MP_ROM_PTR(&bg1_map_obj)},
 
     {MP_ROM_QSTR(MP_QSTR_copy_sprite), MP_ROM_PTR(&sasppu_copy_sprite_obj)},
     {MP_ROM_QSTR(MP_QSTR_copy_sprite_transparent), MP_ROM_PTR(&sasppu_copy_sprite_transparent_obj)},
@@ -286,4 +105,4 @@ const mp_obj_module_t sasppu_module = {
 // Register the module to make it available in Python.
 MP_REGISTER_MODULE(MP_QSTR_sasppu, sasppu_module);
 
-// MP_REGISTER_MODULE_DELEGATION(sasppu_module, sasppu_module_attr);
+MP_REGISTER_MODULE_DELEGATION(sasppu_module, sasppu_module_attr);
