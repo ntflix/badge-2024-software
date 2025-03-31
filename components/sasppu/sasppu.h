@@ -98,7 +98,11 @@ extern uint16_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT];
 
 extern Sprite *SASPPU_sprite_cache[2][SPRITE_CACHE];
 
+#if __STDC_VERSION__ >= 202000
+typedef enum: uint8_t
+#else
 typedef enum
+#endif
 {
     HDMA_NOOP = 0,
     HDMA_WRITE_MAIN_STATE,
@@ -106,7 +110,7 @@ typedef enum
     HDMA_WRITE_BG1_STATE,
     HDMA_WRITE_CMATH_STATE,
     HDMA_WRITE_OAM,
-    HDMA_WRITE_HDMA_DISABLE,
+    HDMA_DISABLE,
 } HDMACommand;
 
 typedef struct

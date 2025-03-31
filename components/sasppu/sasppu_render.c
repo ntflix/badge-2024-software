@@ -28,7 +28,7 @@ static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
 
         HDMAEntry *entry = &SASPPU_hdma_tables[table][y];
 
-        if (entry->command == HDMA_WRITE_HDMA_DISABLE)
+        if (entry->command == HDMA_DISABLE)
         {
             SASPPU_hdma_enable &= ~(1 << table);
             break;

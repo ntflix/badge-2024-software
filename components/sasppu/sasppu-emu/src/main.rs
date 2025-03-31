@@ -41,32 +41,28 @@ fn main() {
     let ppu: &mut SASPPU = unsafe { &mut GLOBAL_STATE };
     ppu.main_state.mainscreen_colour = colour!(31, 0, 0);
     ppu.main_state.subscreen_colour = colour!(0, 0, 0);
-    ppu.bg0_state.main_screen_enable = true;
     ppu.main_state.window_1_left = 30;
     ppu.main_state.window_1_right = 160;
     ppu.main_state.window_2_left = 80;
     ppu.main_state.window_2_right = 210;
-    ppu.bg0_state.enable = true;
-    ppu.bg0_state.main_window_log = (WINDOW_A | WINDOW_AB | WINDOW_B) as u8;
-    ppu.bg0_state.cmath_enable = true;
-    ppu.cmath_state.cmath_enable = true;
-    ppu.cmath_state.sub_sub_screen = true;
+    ppu.main_state.flags = MAIN_BG0_ENABLE | MAIN_SPR0_ENABLE | MAIN_CMATH_ENABLE;
+    ppu.bg0_state.windows = (WINDOW_A | WINDOW_AB | WINDOW_B) as u8;
+    ppu.bg0_state.flags = BG_C_MATH;
+    ppu.cmath_state.flags = CMATH_CMATH_ENABLE | CMATH_SUB_SUB_SCREEN;
     for (i, spr) in ppu.oam.iter_mut().take(TEST_SPR_COUNT).enumerate() {
         spr.flags |= SPR_ENABLED;
         if i & 1 > 0 {
-            spr.flags |= SPR_SUB_SCREEN;
-            spr.flags |= WINDOW_AB << SPR_SUB_WINDOW_POW2;
+            spr.windows = WINDOW_AB << 4;
         } else {
-            spr.flags |= SPR_MAIN_SCREEN;
-            spr.flags |= (WINDOW_X | WINDOW_A | WINDOW_B) << SPR_MAIN_WINDOW_POW2;
+            spr.windows = WINDOW_X | WINDOW_A | WINDOW_B;
         }
         if i & 2 > 0 {
             spr.flags |= SPR_FLIP_X;
         }
-        if i & 3 > 0 {
+        if i & 4 > 0 {
             spr.flags |= SPR_FLIP_Y;
         }
-        if i & 4 > 0 {
+        if i & 8 > 0 {
             spr.flags |= SPR_DOUBLE;
         }
         spr.width = 32;
@@ -126,7 +122,6 @@ fn main() {
     let mut times = VecDeque::new();
     while window.is_open() && !window.is_key_down(Key::Escape) {
         {
-            let mut sprite_cache = [[None; SPRITE_CACHE]; 2];
             let now = Instant::now();
             let epoch = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -141,7 +136,7 @@ fn main() {
                 spr.y = ((epoch * (7.0 + (0.2 * (i >> 1) as f64))).cos() * (120.0 - 16.0)
                     + (120.0 - 16.0)) as i16;
             }
-            ppu.render(&mut sprite_cache, &mut before_buf);
+            ppu.render(&mut before_buf);
             for (x, col) in buffer.iter_mut().zip(before_buf.iter().flatten()) {
                 *x = ((((col >> 11) & 0x1F) as u32) << (16 + 3))
                     | ((((col >> 5) & 0x3F) as u32) << (8 + 2))

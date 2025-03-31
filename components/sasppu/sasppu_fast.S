@@ -80,10 +80,18 @@ size_of_Background:
 .set CMATH_FADE_ENABLE, (1 << 6)
 .set CMATH_CMATH_ENABLE, (1 << 7)
 
+.set MAIN_SPR0_ENABLE, (1 << 0)
+.set MAIN_SPR1_ENABLE, (1 << 1)
+.set MAIN_BG0_ENABLE, (1 << 2)
+.set MAIN_BG1_ENABLE, (1 << 3)
+.set MAIN_CMATH_ENABLE, (1 << 4)
+.set MAIN_BGCOL_WINDOW_ENABLE, (1 << 5)
+
 .set WINDOW_A, (0b0001)
 .set WINDOW_B, (0b0010)
 .set WINDOW_AB, (0b0100)
 .set WINDOW_X, (0b1000)
+.set WINDOW_ALL, (0b1111)
 
 .set REVERSE_BYTES, (1)
 
@@ -710,9 +718,13 @@ cmath_ten:
 .endm
 
 .macro sub_screens
+  movi a15, 0
   ee.vsubs.s16 q5, q5, q1
   ee.vsubs.s16 q6, q6, q2
   ee.vsubs.s16 q7, q7, q3
+  ee.vrelu.s16 q5, a15, a15
+  ee.vrelu.s16 q6, a15, a15
+  ee.vrelu.s16 q7, a15, a15
 .endm
 
 .macro handle_fade_only
@@ -877,10 +889,11 @@ cmath_ten:
 // void per_pixel( //a0 return, a1 stack
   // uint8_t x, // a2
   // uint8_t y, // a3
-  // SpriteCaches *handle_bgcol_window, // a4
-  // HandleBgType *handle_bg0, // a5
-  // HandleBgType *handle_bg1, // a6
+  // HandleWindowType *handle_bgcol_window, // a4
+  // HandleWindowType *handle_bg0, // a5
+  // HandleWindowType *handle_bg1, // a6
   // HandleCMathType *handle_cmath, // a7
+  // HandleWindowType *handle_bgcol_window, // a8
 //);
 .macro per_pixel_macro unique, bgcol_window_enable, cmath_enable, bg1_enable, bg0_enable, spr1_enable, spr0_enable
   entry sp, 64+64
