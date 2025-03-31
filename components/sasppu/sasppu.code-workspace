@@ -1,0 +1,73 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "sasppu-emu"
+		},
+		{
+			"path": "sasppu-sys"
+		},
+		{
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.asm": "lldb.disassembly",
+			"stdbool.h": "c",
+			"mp_uctx.h": "c",
+			"esp_attr.h": "c",
+			"stdint.h": "c",
+			"random": "c",
+			"runtime.h": "c",
+			"math.h": "c",
+			"compare": "c",
+			"cstdint": "c",
+			"flow3r_bsp.h": "c",
+			"st3m_counter.h": "c",
+			"sasppu.h": "c",
+			"sasppu_help.h": "c",
+			"esp_timer.h": "c",
+			"chrono": "c",
+			"esp_task.h": "c",
+			"cstdlib": "c",
+			"charconv": "c",
+			"optional": "c",
+			"format": "c",
+			"ratio": "c",
+			"system_error": "c",
+			"array": "c",
+			"functional": "c",
+			"tuple": "c",
+			"type_traits": "c",
+			"utility": "c",
+			"__bit_reference": "c",
+			"__node_handle": "c",
+			"bitset": "c",
+			"deque": "c",
+			"limits": "c",
+			"locale": "c",
+			"vector": "c",
+			"display.h": "c",
+			"sasppu_windows.h": "c",
+			"*.inc": "c",
+			"any": "c",
+			"variant": "c",
+			"__hash_table": "c",
+			"__tree": "c",
+			"forward_list": "c",
+			"ranges": "c",
+			"sasppu_tile.h": "c",
+			"sstream": "c",
+			"strstream": "c",
+			"sasppu_main_state.h": "c",
+			"stdlib.h": "c",
+			"sasppu_sprite.h": "c",
+			"*.tcc": "c",
+			"ostream": "c",
+			"sasppu_map.h": "c"
+		}
+	}
+}
