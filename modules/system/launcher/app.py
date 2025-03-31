@@ -96,7 +96,7 @@ class Launcher(App):
         eventbus.on_async(
             InstallNotificationEvent, self._handle_refresh_notifications, self
         )
-        self.select_handler("SASPPU Test", 0)
+        #self.select_handler("SASPPU Test", 0)
 
     async def _handle_refresh_notifications(self, _):
         self.update_menu()
