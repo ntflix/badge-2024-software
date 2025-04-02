@@ -1,6 +1,10 @@
 #![feature(portable_simd)]
 #![no_std]
 
+/**
+ * The following is the original Rust version of SASPPU, of which the C/ASM
+ * version is ported.
+ */
 use core::simd::prelude::*;
 
 use seq_macro::seq;
@@ -287,6 +291,7 @@ fn get_window(logic: u8, window_1: mask16x8, window_2: mask16x8) -> mask16x8 {
     }
 }
 
+#[inline]
 fn handle_windows<const LOGIC: u8>(
     window_1: mask16x8,
     window_2: mask16x8,
@@ -330,6 +335,7 @@ fn swimzleoo(a: u16x8, b: u16x8, offset: usize) -> u16x8 {
         5 => simd_swizzle!(a, b, [5, 6, 7, 8, 9, 10, 11, 12]),
         6 => simd_swizzle!(a, b, [6, 7, 8, 9, 10, 11, 12, 13]),
         7 => simd_swizzle!(a, b, [7, 8, 9, 10, 11, 12, 13, 14]),
+        8 => b,
         _ => unreachable!(),
     }
 }
@@ -340,47 +346,59 @@ fn handle_bg(
     map: &BackgroundMap, // a10
     graphics: &GraphicsPlane,
     window_handler: HandleWindowType,
-    main_col: &mut u16x8, // q0
-    sub_col: &mut u16x8,  // q1
-    x: i16,               // a2
-    y: i16,               // a3
-    window_1: mask16x8,   // q2
-    window_2: mask16x8,   // q3
+    main_col: &mut [u16x8; 240 / 8], // q0
+    sub_col: &mut [u16x8; 240 / 8],  // q1
+    y: i16,                          // a3
+    window_1: &[mask16x8; 240 / 8],  // q2
+    window_2: &[mask16x8; 240 / 8],  // q3
 ) {
     let y_pos = (((y + state.scroll_y) as usize) >> 3) & ((MAP_HEIGHT) - 1);
-    let x_pos_1 = (((x + state.scroll_x) as usize) >> 3) & ((MAP_WIDTH) - 1);
-    let x_pos_2 = (x_pos_1 + 1) & ((MAP_WIDTH) - 1);
-    let offset_x = ((x + state.scroll_x) & 0x7u16 as i16) as usize;
+    let mut x_pos = (((240 - 8 + state.scroll_x) as usize) >> 3) & ((MAP_WIDTH) - 1);
+    let offset_x = ((state.scroll_x) & 0x7u16 as i16) as usize;
     let offset_y = ((y + state.scroll_y) & 0x7u16 as i16) as usize;
-    let bg0_1_map = map[y_pos][x_pos_1]; // -> q4
-    let bg0_1 = if (bg0_1_map & 0b10) > 0 {
-        graphics[(bg0_1_map >> 3) as usize + ((7 - offset_y) * (BG_WIDTH >> 3))]
-    } else {
-        graphics[(bg0_1_map >> 3) as usize + (offset_y * (BG_WIDTH >> 3))]
-    }; // -> q4
-    let bg0_1: Simd<u16, 8> = if (bg0_1_map & 0b01) > 0 {
-        bg0_1.reverse()
-    } else {
-        bg0_1
-    }; // -> q4
-    let bg0_2_map = map[y_pos][x_pos_2]; // -> q5
-    let bg0_2 = if (bg0_2_map & 0b10) > 0 {
-        graphics[(bg0_2_map >> 3) as usize + ((7 - offset_y) * (BG_WIDTH >> 3))]
-    } else {
-        graphics[(bg0_2_map >> 3) as usize + (offset_y * (BG_WIDTH >> 3))]
-    }; // -> q5
-    let bg0_2 = if (bg0_2_map & 0b01) > 0 {
-        bg0_2.reverse()
-    } else {
-        bg0_2
-    }; // -> q5
-    let mut bg0 = swimzleoo(bg0_1, bg0_2, offset_x); // q4, q5 -> q4
 
-    if state.flags & BG_C_MATH > 0 {
-        bg0 |= u16x8::splat(0x8000); // q5; q4, q5 -> q4
+    let bg_map = map[y_pos][x_pos]; // -> q5
+    let mut bg_1 = if (bg_map & 0b10) > 0 {
+        graphics[(bg_map >> 3) as usize + ((7 - offset_y) * (BG_WIDTH >> 3))]
+    } else {
+        graphics[(bg_map >> 3) as usize + (offset_y * (BG_WIDTH >> 3))]
+    }; // -> q5
+
+    if (bg_map & 0b01) > 0 {
+        bg_1 = bg_1.reverse();
     }
 
-    return window_handler(window_1, window_2, main_col, sub_col, bg0);
+    let mut bg_2; // -> q4
+
+    for x in (0..(240 / 8)).rev() {
+        bg_2 = bg_1;
+        x_pos = (x_pos.wrapping_sub(1)) & ((MAP_WIDTH) - 1);
+
+        let bg_map = map[y_pos][x_pos]; // -> q5
+        bg_1 = if (bg_map & 0b10) > 0 {
+            graphics[(bg_map >> 3) as usize + ((7 - offset_y) * (BG_WIDTH >> 3))]
+        } else {
+            graphics[(bg_map >> 3) as usize + (offset_y * (BG_WIDTH >> 3))]
+        }; // -> q5
+
+        if (bg_map & 0b01) > 0 {
+            bg_1 = bg_1.reverse();
+        }
+
+        let mut bg = swimzleoo(bg_1, bg_2, offset_x); // q4, q5 -> q4
+
+        if state.flags & BG_C_MATH > 0 {
+            bg |= u16x8::splat(0x8000); // q5; q4, q5 -> q4
+        }
+
+        window_handler(
+            window_1[x],
+            window_2[x],
+            &mut main_col[x],
+            &mut sub_col[x],
+            bg,
+        );
+    }
 }
 
 #[inline]
@@ -392,84 +410,127 @@ fn handle_sprite<
 >(
     sprite: &Sprite,
     graphics: &SpritePlane,
-    main_col: &mut u16x8, // q0
-    sub_col: &mut u16x8,  // q1
-    x: i16,
+    main_col: &mut [u16x8; 240 / 8], // q0
+    sub_col: &mut [u16x8; 240 / 8],  // q1
     y: i16,
-    window_1: mask16x8, // q2
-    window_2: mask16x8, // q3
+    window_1: &[mask16x8; 240 / 8], // q2
+    window_2: &[mask16x8; 240 / 8], // q3
 ) {
+    assert_eq!(sprite.width & 0x7, 0);
+    assert!(sprite.width > 0);
+
     let sprite_width = if THIS_SPR_DOUBLE {
         sprite.width << 1
     } else {
         sprite.width
     };
-    let mut offset_x = x - sprite.x;
-    if offset_x >= -7 && offset_x < sprite_width as i16 {
-        if THIS_SPR_FLIP_X {
-            offset_x = sprite_width as i16 - offset_x - 1;
-        }
-        let mut offset_y = y - sprite.y;
-        if THIS_SPR_FLIP_Y {
-            offset_y = sprite_width as i16 - offset_y - 1;
-        }
-        let mut offset_y = offset_y as usize;
-        if THIS_SPR_DOUBLE {
-            offset_x >>= 1;
-            offset_y >>= 1;
-        }
-        let x_pos_1 = (offset_x
-            & if THIS_SPR_DOUBLE {
-                0xFFFCu16
-            } else {
-                0xFFF8u16
-            } as i16) as isize;
-        let x_pos_2 = if THIS_SPR_FLIP_X {
-            x_pos_1 - 8
+
+    let offset = (8 - (sprite.x & 0x7i16)) as usize;
+
+    let mut offset_y = y - sprite.y;
+    if THIS_SPR_FLIP_Y {
+        offset_y = sprite_width as i16 - offset_y - 1;
+    }
+    if THIS_SPR_DOUBLE {
+        offset_y >>= 1;
+    }
+    let offset_y = offset_y as usize;
+
+    let mut x_pos = if THIS_SPR_FLIP_X {
+        -8
+    } else {
+        sprite.width as isize
+    };
+
+    let mut spr_1 = u16x8::splat(0);
+    let mut spr_2;
+
+    let start_x = (sprite.x as isize) / 8;
+    let end_x = ((sprite.x + sprite_width as i16) as isize) / 8;
+
+    let mut x = end_x;
+    while x >= start_x {
+        x_pos = if THIS_SPR_FLIP_X {
+            x_pos + 8
         } else {
-            x_pos_1 + 8
+            x_pos - 8
         };
-        let offset = ((8 - (sprite.x & 0x7i16)) % 8) as usize;
-        let mut spr_1 = if x_pos_1 >= sprite.width as isize || x_pos_1 < 0 {
-            // q4
-            u16x8::splat(0)
-        } else {
-            graphics[offset_y + sprite.graphics_y as usize]
-                [(x_pos_1 as usize >> 3) + sprite.graphics_x as usize]
-        };
-        let mut spr_2 = if x_pos_2 >= sprite.width as isize || x_pos_2 < 0 {
+
+        spr_2 = spr_1;
+
+        spr_1 = if (THIS_SPR_FLIP_X && x_pos >= sprite.width as isize)
+            || (!THIS_SPR_FLIP_X && x_pos < 0)
+        {
             // q5
             u16x8::splat(0)
         } else {
             graphics[offset_y + sprite.graphics_y as usize]
-                [(x_pos_2 as usize >> 3) + sprite.graphics_x as usize]
+                [(x_pos as usize >> 3) + sprite.graphics_x as usize]
         };
-        if THIS_SPR_DOUBLE {
-            if x_pos_1 & 0x4 == 0 {
-                if THIS_SPR_FLIP_X {
-                    spr_1 = spr_1.interleave(spr_1).0;
-                    spr_2 = spr_2.interleave(spr_2).1;
-                } else {
-                    (spr_1, spr_2) = spr_1.interleave(spr_1);
-                }
-            } else if THIS_SPR_FLIP_X {
-                (spr_2, spr_1) = spr_1.interleave(spr_1);
-            } else {
-                spr_1 = spr_1.interleave(spr_1).1;
-                spr_2 = spr_2.interleave(spr_2).0;
-            }
-        }
-        if THIS_SPR_FLIP_X {
-            (spr_1, spr_2) = (spr_1.reverse(), spr_2.reverse());
-        }
-        let mut spr_col = swimzleoo(spr_1, spr_2, offset); // q4
-        if THIS_SPR_C_MATH {
-            spr_col |= u16x8::splat(0x8000);
-        }
 
-        return select_correct_handle_window(sprite.windows)(
-            window_1, window_2, main_col, sub_col, spr_col,
-        );
+        if THIS_SPR_DOUBLE {
+            let mut spr_1_high;
+            (spr_1, spr_1_high) = spr_1.interleave(spr_1);
+
+            if THIS_SPR_FLIP_X {
+                (spr_1_high, spr_1) = (spr_1.reverse(), spr_1_high.reverse());
+            }
+
+            if x >= 0 && x < 30 {
+                let mut spr_col = swimzleoo(spr_1_high, spr_2, offset); // q4
+
+                if THIS_SPR_C_MATH {
+                    spr_col |= u16x8::splat(0x8000);
+                }
+
+                select_correct_handle_window(sprite.windows)(
+                    window_1[x as usize],
+                    window_2[x as usize],
+                    &mut main_col[x as usize],
+                    &mut sub_col[x as usize],
+                    spr_col,
+                );
+            }
+            x -= 1;
+
+            if x >= 0 && x < 30 {
+                let mut spr_col = swimzleoo(spr_1, spr_1_high, offset); // q4
+
+                if THIS_SPR_C_MATH {
+                    spr_col |= u16x8::splat(0x8000);
+                }
+
+                select_correct_handle_window(sprite.windows)(
+                    window_1[x as usize],
+                    window_2[x as usize],
+                    &mut main_col[x as usize],
+                    &mut sub_col[x as usize],
+                    spr_col,
+                );
+            }
+            x -= 1;
+        } else {
+            if THIS_SPR_FLIP_X {
+                spr_1 = spr_1.reverse();
+            }
+
+            if x >= 0 && x < 30 {
+                let mut spr_col = swimzleoo(spr_1, spr_2, offset); // q4
+
+                if THIS_SPR_C_MATH {
+                    spr_col |= u16x8::splat(0x8000);
+                }
+
+                select_correct_handle_window(sprite.windows)(
+                    window_1[x as usize],
+                    window_2[x as usize],
+                    &mut main_col[x as usize],
+                    &mut sub_col[x as usize],
+                    spr_col,
+                );
+            }
+            x -= 1;
+        }
     }
 }
 
@@ -484,8 +545,15 @@ macro_rules! generate_handle_sprites {
     };
 }
 
-type HandleSpriteType =
-    fn(&Sprite, &SpritePlane, &mut u16x8, &mut u16x8, i16, i16, mask16x8, mask16x8);
+type HandleSpriteType = fn(
+    &Sprite,
+    &SpritePlane,
+    &mut [u16x8; 240 / 8],
+    &mut [u16x8; 240 / 8],
+    i16,
+    &[mask16x8; 240 / 8],
+    &[mask16x8; 240 / 8],
+);
 
 seq!(N in 0..16 {
 static HANDLE_SPRITE_LOOKUP: [HandleSpriteType; 16] =
@@ -503,9 +571,9 @@ fn select_correct_handle_sprite(state: &Sprite) -> HandleSpriteType {
 
 macro_rules! split_main {
     ($main_col:ident, $mask:ident) => {{
-        let main_r: i16x8 = ((*$main_col << 0) & $mask).cast();
-        let main_g: i16x8 = ((*$main_col << 5) & $mask).cast();
-        let main_b: i16x8 = ((*$main_col << 10) & $mask).cast();
+        let main_r: i16x8 = (($main_col << 0) & $mask).cast();
+        let main_g: i16x8 = (($main_col << 5) & $mask).cast();
+        let main_b: i16x8 = (($main_col << 10) & $mask).cast();
         (main_r, main_g, main_b)
     }};
 }
@@ -539,10 +607,24 @@ macro_rules! sub_screens {
         $main_r = $main_r - $sub_r;
         $main_g = $main_g - $sub_g;
         $main_b = $main_b - $sub_b;
-        $main_r = $main_r.simd_lt(i16x8::splat(0)).select(i16x8::splat(0), $main_r); // maps to EE.VRELU.S16 x, 0, 0
-        $main_g = $main_g.simd_lt(i16x8::splat(0)).select(i16x8::splat(0), $main_g);
-        $main_b = $main_b.simd_lt(i16x8::splat(0)).select(i16x8::splat(0), $main_b);
+        $main_r = $main_r
+            .simd_lt(i16x8::splat(0))
+            .select(i16x8::splat(0), $main_r); // maps to EE.VRELU.S16 x, 0, 0
+        $main_g = $main_g
+            .simd_lt(i16x8::splat(0))
+            .select(i16x8::splat(0), $main_g);
+        $main_b = $main_b
+            .simd_lt(i16x8::splat(0))
+            .select(i16x8::splat(0), $main_b);
     };
+}
+
+#[inline]
+fn no_cmath_shift(main_col: &mut [u16x8; 240 / 8]) {
+    for x in (0..(240 / 8)).rev() {
+        main_col[x] = ((main_col[x] & u16x8::splat(0b0111111111100000)) << 1)
+            | (main_col[x] & u16x8::splat(0b00011111));
+    }
 }
 
 #[inline]
@@ -557,59 +639,62 @@ fn handle_cmath<
     const CMATH_ENABLE: bool,
 >(
     cmath_state: &CMathState,
-    main_col: &mut u16x8, // q0
-    sub_col: &mut u16x8,  // q1
+    main_col: &mut [u16x8; 240 / 8], // q0
+    sub_col: &mut [u16x8; 240 / 8],  // q1
 ) {
-    let use_cmath = mask16x8::splat(CMATH_ENABLE) & main_col.simd_ge(u16x8::splat(0x8000));
-    if FADE_ENABLE || use_cmath.any() {
-        let mask = u16x8::splat(0b0111110000000000);
-        let (mut main_r, mut main_g, mut main_b) = split_main!(main_col, mask);
-        if use_cmath.any() {
-            let (mut sub_r, mut sub_g, mut sub_b) = split_main!(sub_col, mask);
+    if FADE_ENABLE || CMATH_ENABLE {
+        for x in (0..(240 / 8)).rev() {
+            let use_cmath = main_col[x].simd_ge(u16x8::splat(0x8000));
+            let mask = u16x8::splat(0b0111110000000000);
+            let this_main_col = main_col[x];
+            let (mut main_r, mut main_g, mut main_b) = split_main!(this_main_col, mask);
+            if CMATH_ENABLE {
+                let this_sub_col = sub_col[x];
+                let (mut sub_r, mut sub_g, mut sub_b) = split_main!(this_sub_col, mask);
 
-            let main_r_bak = main_r;
-            let main_g_bak = main_g;
-            let main_b_bak = main_b;
+                let main_r_bak = main_r;
+                let main_g_bak = main_g;
+                let main_b_bak = main_b;
 
-            if DOUBLE_MAIN_SCREEN {
-                double_screen!(main_r, main_g, main_b);
-            }
-            if HALF_MAIN_SCREEN {
-                halve_screen!(main_r, main_g, main_b);
-            }
-            if DOUBLE_SUB_SCREEN {
-                double_screen!(sub_r, sub_g, sub_b);
-            }
-            if HALF_SUB_SCREEN {
-                halve_screen!(sub_r, sub_g, sub_b);
-            }
-            if ADD_SUB_SCREEN {
-                add_screens!(main_r, main_g, main_b, sub_r, sub_g, sub_b);
-            }
-            if SUB_SUB_SCREEN {
-                sub_screens!(main_r, main_g, main_b, sub_r, sub_g, sub_b);
-            }
+                if DOUBLE_MAIN_SCREEN {
+                    double_screen!(main_r, main_g, main_b);
+                }
+                if HALF_MAIN_SCREEN {
+                    halve_screen!(main_r, main_g, main_b);
+                }
+                if DOUBLE_SUB_SCREEN {
+                    double_screen!(sub_r, sub_g, sub_b);
+                }
+                if HALF_SUB_SCREEN {
+                    halve_screen!(sub_r, sub_g, sub_b);
+                }
+                if ADD_SUB_SCREEN {
+                    add_screens!(main_r, main_g, main_b, sub_r, sub_g, sub_b);
+                }
+                if SUB_SUB_SCREEN {
+                    sub_screens!(main_r, main_g, main_b, sub_r, sub_g, sub_b);
+                }
 
-            main_r = use_cmath.select(main_r, main_r_bak);
-            main_g = use_cmath.select(main_g, main_g_bak);
-            main_b = use_cmath.select(main_b, main_b_bak);
+                main_r = use_cmath.select(main_r, main_r_bak);
+                main_g = use_cmath.select(main_g, main_g_bak);
+                main_b = use_cmath.select(main_b, main_b_bak);
+            }
+            if FADE_ENABLE {
+                let fade = i16x8::splat(cmath_state.screen_fade as i16);
+                main_r = (main_r >> 8) * fade;
+                main_g = (main_g >> 8) * fade;
+                main_b = (main_b >> 8) * fade;
+            }
+            let mut main_r: u16x8 = main_r.cast();
+            let mut main_g: u16x8 = main_g.cast();
+            let mut main_b: u16x8 = main_b.cast();
+            main_r &= mask;
+            main_g &= mask;
+            main_b &= mask;
+            main_col[x] = (main_r << 1) | (main_g >> 4) | (main_b >> 10);
         }
-        if FADE_ENABLE {
-            let fade = i16x8::splat(cmath_state.screen_fade as i16);
-            main_r = (main_r >> 8) * fade;
-            main_g = (main_g >> 8) * fade;
-            main_b = (main_b >> 8) * fade;
-        }
-        let mut main_r: u16x8 = main_r.cast();
-        let mut main_g: u16x8 = main_g.cast();
-        let mut main_b: u16x8 = main_b.cast();
-        main_r &= mask;
-        main_g &= mask;
-        main_b &= mask;
-        *main_col = (main_r << 1) | (main_g >> 4) | (main_b >> 10);
     } else {
-        *main_col = ((*main_col & u16x8::splat(0b0111111111100000)) << 1)
-            | (*main_col & u16x8::splat(0b00011111));
+        no_cmath_shift(main_col);
     }
 }
 
@@ -628,7 +713,7 @@ macro_rules! generate_handle_cmaths {
     };
 }
 
-type HandleCMathType = fn(&CMathState, &mut u16x8, &mut u16x8);
+type HandleCMathType = fn(&CMathState, &mut [u16x8; 240 / 8], &mut [u16x8; 240 / 8]);
 
 seq!(N in 0..256 {
 static HANDLE_CMATH_LOOKUP: [HandleCMathType; 256] =
@@ -644,9 +729,9 @@ fn select_correct_handle_cmaths(state: &CMathState) -> HandleCMathType {
     HANDLE_CMATH_LOOKUP[state.flags as usize]
 }
 
-macro_rules! generate_per_pixels {
+macro_rules! generate_per_scanline {
     ($consts:expr) => {
-        SASPPU::per_pixel::<
+        SASPPU::per_scanline::<
             { ($consts) & MAIN_BG0_ENABLE > 0 },
             { ($consts) & MAIN_BG1_ENABLE > 0 },
             { ($consts) & MAIN_SPR0_ENABLE > 0 },
@@ -657,30 +742,30 @@ macro_rules! generate_per_pixels {
     };
 }
 
-type PerPixelType = fn(
+type PerScanlineType = fn(
     &SASPPU,
     &SpriteCaches,
-    u8,
+    &mut [u16x8; 240 / 8],
     u8,
     HandleWindowType,
     HandleWindowType,
     HandleWindowType,
     HandleCMathType,
     HandleWindowType,
-) -> u16x8;
+);
 
 seq!(N in 0..64 {
-static PER_PIXEL_LOOKUP: [PerPixelType; 64] =
+static PER_SCANLINE_LOOKUP: [PerScanlineType; 64] =
     [
         #(
-        generate_per_pixels!(N),
+        generate_per_scanline!(N),
         )*
     ];
 });
 
 impl SASPPU {
     #[inline]
-    fn per_pixel<
+    fn per_scanline<
         const BG0_ENABLE: bool,
         const BG1_ENABLE: bool,
         const SPR0_ENABLE: bool,
@@ -690,51 +775,62 @@ impl SASPPU {
     >(
         &self,
         sprite_caches: &SpriteCaches,
-        x: u8,
+        scanline: &mut [u16x8; 240 / 8],
         y: u8,
         handle_bgcol_main_window: HandleWindowType,
         handle_bg0_window: HandleWindowType,
         handle_bg1_window: HandleWindowType,
         handle_cmath: HandleCMathType,
         handle_bgcol_sub_window: HandleWindowType,
-    ) -> u16x8 {
-        // x_window = q3
-        let x_window = u16x8::from_array([0, 1, 2, 3, 4, 5, 6, 7]) + u16x8::splat(x as u16);
-        // window_1 = q2
-        let window_1 = (x_window.simd_gt(u16x8::splat(self.main_state.window_1_left as u16))
-            | x_window.simd_eq(u16x8::splat(self.main_state.window_1_left as u16)))
-            & (x_window.simd_lt(u16x8::splat(self.main_state.window_1_right as u16))
-                | x_window.simd_eq(u16x8::splat(self.main_state.window_1_right as u16)));
-        // window_2 = q3
-        let window_2 = (x_window.simd_gt(u16x8::splat(self.main_state.window_2_left as u16))
-            | x_window.simd_eq(u16x8::splat(self.main_state.window_2_left as u16)))
-            & (x_window.simd_lt(u16x8::splat(self.main_state.window_2_right as u16))
-                | x_window.simd_eq(u16x8::splat(self.main_state.window_2_right as u16)));
+    ) {
+        let mut window_1_cache = [mask16x8::default(); 240 / 8];
+        let mut window_2_cache = [mask16x8::default(); 240 / 8];
 
-        // main_col = q0
-        let mut main_col;
-        // sub_col = q1
-        let mut sub_col;
+        // x_window = q3
+        let mut x_window = u16x8::from_array([0, 1, 2, 3, 4, 5, 6, 7]) + u16x8::splat(240 - 8);
+        for x in (0..(240 / 8)).rev() {
+            // window_1 = q2
+            window_1_cache[x] = (x_window
+                .simd_gt(u16x8::splat(self.main_state.window_1_left as u16))
+                | x_window.simd_eq(u16x8::splat(self.main_state.window_1_left as u16)))
+                & (x_window.simd_lt(u16x8::splat(self.main_state.window_1_right as u16))
+                    | x_window.simd_eq(u16x8::splat(self.main_state.window_1_right as u16)));
+            // window_2 = q3
+            window_2_cache[x] = (x_window
+                .simd_gt(u16x8::splat(self.main_state.window_2_left as u16))
+                | x_window.simd_eq(u16x8::splat(self.main_state.window_2_left as u16)))
+                & (x_window.simd_lt(u16x8::splat(self.main_state.window_2_right as u16))
+                    | x_window.simd_eq(u16x8::splat(self.main_state.window_2_right as u16)));
+
+            x_window -= u16x8::splat(8);
+        }
+
+        let mut sub_screen = [u16x8::default(); 240 / 8];
+
         if BGCOL_ENABLE {
-            main_col = u16x8::splat(0);
-            sub_col = u16x8::splat(0);
-            handle_bgcol_sub_window(
-                window_1,
-                window_2,
-                &mut main_col,
-                &mut sub_col,
-                u16x8::splat(self.main_state.subscreen_colour),
-            );
-            handle_bgcol_main_window(
-                window_1,
-                window_2,
-                &mut main_col,
-                &mut sub_col,
-                u16x8::splat(self.main_state.mainscreen_colour),
-            );
+            for x in (0..(240 / 8)).rev() {
+                scanline[x] = u16x8::splat(0);
+                sub_screen[x] = u16x8::splat(0);
+                handle_bgcol_sub_window(
+                    window_1_cache[x],
+                    window_2_cache[x],
+                    &mut scanline[x],
+                    &mut sub_screen[x],
+                    u16x8::splat(self.main_state.subscreen_colour),
+                );
+                handle_bgcol_main_window(
+                    window_1_cache[x],
+                    window_2_cache[x],
+                    &mut scanline[x],
+                    &mut sub_screen[x],
+                    u16x8::splat(self.main_state.mainscreen_colour),
+                );
+            }
         } else {
-            main_col = u16x8::splat(self.main_state.mainscreen_colour);
-            sub_col = u16x8::splat(self.main_state.subscreen_colour);
+            for x in (0..(240 / 8)).rev() {
+                scanline[x] = u16x8::splat(self.main_state.mainscreen_colour);
+                sub_screen[x] = u16x8::splat(self.main_state.subscreen_colour);
+            }
         }
 
         // q0, q1, q2, q3, q4, q5, q6, q7 -> q0, q1
@@ -744,12 +840,11 @@ impl SASPPU {
                 &self.bg0,
                 &self.background,
                 handle_bg0_window,
-                &mut main_col,
-                &mut sub_col,
-                x as i16,
+                scanline,
+                &mut sub_screen,
                 y as i16,
-                window_1,
-                window_2,
+                &window_1_cache,
+                &window_2_cache,
             );
         }
 
@@ -761,12 +856,11 @@ impl SASPPU {
                 select_correct_handle_sprite(spr.unwrap())(
                     spr.unwrap(),
                     &self.sprites,
-                    &mut main_col,
-                    &mut sub_col,
-                    x as i16,
+                    scanline,
+                    &mut sub_screen,
                     y as i16,
-                    window_1,
-                    window_2,
+                    &window_1_cache,
+                    &window_2_cache,
                 )
             }
         }
@@ -777,12 +871,11 @@ impl SASPPU {
                 &self.bg1,
                 &self.background,
                 handle_bg1_window,
-                &mut main_col,
-                &mut sub_col,
-                x as i16,
+                scanline,
+                &mut sub_screen,
                 y as i16,
-                window_1,
-                window_2,
+                &window_1_cache,
+                &window_2_cache,
             );
         }
 
@@ -794,29 +887,25 @@ impl SASPPU {
                 select_correct_handle_sprite(spr.unwrap())(
                     spr.unwrap(),
                     &self.sprites,
-                    &mut main_col,
-                    &mut sub_col,
-                    x as i16,
+                    scanline,
+                    &mut sub_screen,
                     y as i16,
-                    window_1,
-                    window_2,
+                    &window_1_cache,
+                    &window_2_cache,
                 )
             }
         }
 
         if CMATH_ENABLE {
-            handle_cmath(&self.cmath_state, &mut main_col, &mut sub_col);
+            handle_cmath(&self.cmath_state, scanline, &mut sub_screen);
         } else {
-            main_col = ((main_col & u16x8::splat(0b0111111111100000)) << 1)
-                | (main_col & u16x8::splat(0b00011111));
+            no_cmath_shift(scanline);
         }
-
-        main_col
     }
 
     #[inline]
-    fn select_correct_per_pixel(&self) -> PerPixelType {
-        PER_PIXEL_LOOKUP[self.main_state.flags as usize]
+    fn select_correct_per_scanline(&self) -> PerScanlineType {
+        PER_SCANLINE_LOOKUP[self.main_state.flags as usize]
     }
 
     fn handle_hdma<'a>(&'a mut self, y: u8) {
@@ -927,6 +1016,7 @@ impl SASPPU {
     }
 
     pub fn render<'a>(&'a mut self, screen: &mut [[u16; 240]; 240]) {
+        let mut scanline = [u16x8::splat(0); 240 / 8];
         for y in 0..240 {
             let mut sprite_caches: SpriteCaches = [[None; SPRITE_CACHE]; 2];
             self.handle_hdma(y);
@@ -939,22 +1029,22 @@ impl SASPPU {
             let handle_bgcol_sub_window =
                 select_correct_handle_window(self.main_state.bgcol_windows & 0xF0);
             let handle_cmath = select_correct_handle_cmaths(&self.cmath_state);
-            let per_pixel = self.select_correct_per_pixel();
 
-            for x in (0..240).step_by(8) {
-                let col = per_pixel(
-                    self,
-                    &mut sprite_caches,
-                    x,
-                    y,
-                    handle_bgcol_main_window,
-                    handle_bg0_window,
-                    handle_bg1_window,
-                    handle_cmath,
-                    handle_bgcol_sub_window,
-                );
+            self.select_correct_per_scanline()(
+                self,
+                &mut sprite_caches,
+                &mut scanline,
+                y,
+                handle_bgcol_main_window,
+                handle_bg0_window,
+                handle_bg1_window,
+                handle_cmath,
+                handle_bgcol_sub_window,
+            );
 
-                screen[y as usize][x as usize..x as usize + 8].clone_from_slice(col.as_array())
+            for x in (0..240).step_by(8).rev() {
+                screen[y as usize][x as usize..x as usize + 8]
+                    .clone_from_slice(scanline[x / 8].as_array())
             }
         }
     }

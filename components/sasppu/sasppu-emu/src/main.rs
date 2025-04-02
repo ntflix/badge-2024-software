@@ -56,13 +56,13 @@ fn main() {
         } else {
             spr.windows = WINDOW_X | WINDOW_A | WINDOW_B;
         }
-        if i & 2 > 0 {
+        if (i & 2 > 0) ^ (i & 16 > 0) {
             spr.flags |= SPR_FLIP_X;
         }
-        if i & 4 > 0 {
+        if (i & 4 > 0) ^ (i & 16 > 0) {
             spr.flags |= SPR_FLIP_Y;
         }
-        if i & 8 > 0 {
+        if (i & 8 > 0) ^ (i & 16 > 0) {
             spr.flags |= SPR_DOUBLE;
         }
         spr.width = 32;
@@ -131,9 +131,9 @@ fn main() {
             ppu.bg0_state.scroll_x = ((epoch * 2.0).sin() * 256.0 + 256.0) as i16;
             ppu.bg0_state.scroll_y = ((epoch * 3.0).cos() * 256.0 + 256.0) as i16;
             for (i, spr) in ppu.oam.iter_mut().take(TEST_SPR_COUNT).enumerate() {
-                spr.x = ((epoch * (5.0 + (0.3 * (i >> 1) as f64))).sin() * (120.0 - 16.0)
+                spr.x = ((epoch * (5.0 + (0.3 * (i >> 1) as f64))).sin() * (120.0)
                     + (120.0 - 16.0)) as i16;
-                spr.y = ((epoch * (7.0 + (0.2 * (i >> 1) as f64))).cos() * (120.0 - 16.0)
+                spr.y = ((epoch * (7.0 + (0.2 * (i >> 1) as f64))).cos() * (120.0)
                     + (120.0 - 16.0)) as i16;
             }
             ppu.render(&mut before_buf);
@@ -154,12 +154,12 @@ fn main() {
             }
             let current_time = now.elapsed();
             times.push_back(current_time);
-            if times.len() > 100 {
+            if times.len() > 500 {
                 times.pop_front();
             }
             let elapsed_time: f64 =
                 times.iter().sum::<Duration>().as_secs_f64() / times.len() as f64;
-            if i & 0xF == 0 {
+            if i & 0xFF == 0 {
                 println!(
                     "Frame: {:.4}ms, Avg: {:.4}, Avg. FPS: {:.4}",
                     current_time.as_secs_f64() * 1000.0,
