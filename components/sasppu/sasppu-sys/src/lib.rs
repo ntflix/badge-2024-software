@@ -750,8 +750,8 @@ type PerScanlineType = fn(
     HandleWindowType,
     HandleWindowType,
     HandleWindowType,
-    HandleCMathType,
     HandleWindowType,
+    HandleCMathType,
 );
 
 seq!(N in 0..64 {
@@ -778,10 +778,10 @@ impl SASPPU {
         scanline: &mut [u16x8; 240 / 8],
         y: u8,
         handle_bgcol_main_window: HandleWindowType,
+        handle_bgcol_sub_window: HandleWindowType,
         handle_bg0_window: HandleWindowType,
         handle_bg1_window: HandleWindowType,
         handle_cmath: HandleCMathType,
-        handle_bgcol_sub_window: HandleWindowType,
     ) {
         let mut window_1_cache = [mask16x8::default(); 240 / 8];
         let mut window_2_cache = [mask16x8::default(); 240 / 8];
@@ -909,7 +909,7 @@ impl SASPPU {
     }
 
     fn handle_hdma<'a>(&'a mut self, y: u8) {
-        for table in 0..8 {
+        for table in 0..SASPPU_HDMA_TABLE_COUNT {
             if ((self.hdma_enable >> table) & 1) == 0 {
                 continue;
             }
@@ -1036,10 +1036,10 @@ impl SASPPU {
                 &mut scanline,
                 y,
                 handle_bgcol_main_window,
+                handle_bgcol_sub_window,
                 handle_bg0_window,
                 handle_bg1_window,
                 handle_cmath,
-                handle_bgcol_sub_window,
             );
 
             for x in (0..240).step_by(8).rev() {

@@ -15,9 +15,10 @@ EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[8][240];
 uint8_t SASPPU_hdma_enable;
 
 // Defined in sasppu_fast.S
-void SASPPU_render_scanline(uint8_t y, uint8_t *fb);
+typedef void (*per_scanline_type)(uint16_t *, uint8_t);
+extern per_scanline_type SASPPU_per_scanline_jump_table[64];
 
-static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
+static inline void SASPPU_handle_hdma(uint8_t y)
 {
     for (size_t table = 0; table < SASPPU_HDMA_TABLE_COUNT; table++)
     {
@@ -76,7 +77,10 @@ static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
         break;
         }
     }
+}
 
+static inline void SASPPU_handle_sprite_cache(uint8_t y)
+{
     uint32_t sprites_indcies[2] = {0, 0};
     for (size_t i = 0; i < SPRITE_COUNT; i++)
     {
@@ -143,15 +147,15 @@ static inline void SASPPU_per_scanline(uint8_t y, uint8_t *fb)
     {
         SASPPU_sprite_cache[1][sprites_indcies[1]] = NULL;
     }
-
-    return SASPPU_render_scanline(y, fb);
 }
 
-void SASPPU_render(uint8_t *fb, uint8_t section)
+void SASPPU_render(uint16_t *fb, uint8_t section)
 {
     // Screen is rendered top to bottom for sanity's sake
     for (size_t y = 60 * section; y < 60 * (section + 1); y++)
     {
-        SASPPU_per_scanline(y, fb);
+        SASPPU_handle_hdma(y);
+        SASPPU_handle_sprite_cache(y);
+        SASPPU_per_scanline_jump_table[SASPPU_main_state_flags](y, fb + (y * 240));
     }
 }
