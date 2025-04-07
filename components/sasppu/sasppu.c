@@ -28,7 +28,7 @@ Sprite *SASPPU_sprite_cache[2][SPRITE_CACHE];
 uint16x8_t SASPPU_subscreen_scanline[240 / 8];
 mask16x8_t SASPPU_window_cache[(240 / 8) * 2];
 
-HDMAEntry SASPPU_hdma_tables[SASPPU_HDMA_TABLE_COUNT][240];
+EXT_RAM_BSS_ATTR HDMAEntry SASPPU_hdma_tables[SASPPU_HDMA_TABLE_COUNT][240];
 
 const uint16x8_t VECTOR_INCREMENTS = {0, 1, 2, 3, 4, 5, 6, 7};
 const uint16x8_t VECTOR_SCANLINE_END = VBROADCAST(SCANLINE_END);
@@ -194,8 +194,14 @@ void SASPPU_render(uint16x8_t *fb, uint8_t section)
     // Screen is rendered top to bottom for sanity's sake
     for (size_t y = 60 * section; y < 60 * (section + 1); y++)
     {
-        SASPPU_handle_hdma(y);
-        SASPPU_handle_sprite_cache(y);
+        if (SASPPU_hdma_enable)
+        {
+            SASPPU_handle_hdma(y);
+        }
+        if (SASPPU_main_state.flags & (MAIN_SPR0_ENABLE | MAIN_SPR1_ENABLE))
+        {
+            SASPPU_handle_sprite_cache(y);
+        }
         HANDLE_SCANLINE_LOOKUP[SASPPU_main_state.flags](fb + (y * 240 / 8), y);
     }
 }
