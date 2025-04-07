@@ -32,12 +32,12 @@ static mp_obj_t sasppu_main_state_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, 
     sasppu_main_state_t *self = MP_OBJ_TO_PTR(lhs_in);
     if (self->bound)
     {
-        self->dat = SASPPU_raise_main_state();
+        self->dat = SASPPU_main_state;
     }
     sasppu_main_state_t *other = MP_OBJ_TO_PTR(rhs_in);
     if (other->bound)
     {
-        other->dat = SASPPU_raise_main_state();
+        other->dat = SASPPU_main_state;
     }
     switch (op)
     {
@@ -56,7 +56,7 @@ static void sasppu_main_state_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
     sasppu_main_state_t *self = MP_OBJ_TO_PTR(self_in);
     if (self->bound)
     {
-        self->dat = SASPPU_raise_main_state();
+        self->dat = SASPPU_main_state;
     }
     if (dest[0] == MP_OBJ_NULL)
     {
@@ -222,7 +222,7 @@ static void sasppu_main_state_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
     }
     if (self->bound)
     {
-        SASPPU_lower_main_state(self->dat);
+        SASPPU_main_state = self->dat;
     }
 }
 
@@ -231,7 +231,7 @@ static mp_obj_t sasppu_main_state_unbind(mp_obj_t self_in)
     sasppu_main_state_t *self = MP_OBJ_TO_PTR(self_in);
     if (self->bound)
     {
-        self->dat = SASPPU_raise_main_state();
+        SASPPU_main_state = self->dat;
     }
     self->bound = false;
     return mp_const_none;
@@ -253,11 +253,11 @@ static mp_obj_t sasppu_main_state_bind(size_t n_args, const mp_obj_t *args)
     self->bound = true;
     if (flush)
     {
-        SASPPU_lower_main_state(self->dat);
+        SASPPU_main_state = self->dat;
     }
     else
     {
-        self->dat = SASPPU_raise_main_state();
+        self->dat = SASPPU_main_state;
     }
     return mp_const_none;
 }

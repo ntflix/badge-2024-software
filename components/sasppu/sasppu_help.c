@@ -270,153 +270,122 @@ static inline SASPPUImageCode SASPPU_draw_text(size_t x, size_t y, uint16_t colo
 
 SASPPUImageCode SASPPU_copy_sprite(size_t dst_x, size_t dst_y, size_t width, size_t height, size_t src_x, size_t src_y, bool double_size)
 {
-    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, false);
+    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_copy_sprite_transparent(size_t dst_x, size_t dst_y, size_t width, size_t height, size_t src_x, size_t src_y, bool double_size)
 {
-    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, true);
+    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_blit_sprite(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint16_t *data)
 {
-    return SASPPU_blit(x, y, width, height, double_size, data, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, false);
+    return SASPPU_blit(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_blit_sprite_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint16_t *data)
 {
-    return SASPPU_blit(x, y, width, height, double_size, data, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, true);
+    return SASPPU_blit(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_paletted_sprite(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_paletted(x, y, width, height, double_size, data, SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, false);
+    return SASPPU_paletted(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_paletted_sprite_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_paletted(x, y, width, height, double_size, data, SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, true);
+    return SASPPU_paletted(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_compressed_sprite(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_compressed(x, y, width, height, double_size, data, SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, false);
+    return SASPPU_compressed(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_compressed_sprite_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_compressed(x, y, width, height, double_size, data, SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, true);
+    return SASPPU_compressed(x, y, width, height, double_size, data, (uint16_t *)SASPPU_sprites, palette, bitdepth, SPR_WIDTH, SPR_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_fill_sprite(size_t x, size_t y, size_t width, size_t height, uint16_t colour)
 {
-    return SASPPU_fill(x, y, width, height, colour, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
+    return SASPPU_fill(x, y, width, height, colour, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
 }
 SASPPUImageCode SASPPU_draw_text_sprite(size_t x, size_t y, uint16_t colour, size_t line_width, size_t newline_height, bool double_size, const char *text)
 {
-    return SASPPU_draw_text(x, y, colour, line_width, newline_height, double_size, text, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
+    return SASPPU_draw_text(x, y, colour, line_width, newline_height, double_size, text, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
 }
 SASPPUImageCode SASPPU_draw_text_next_sprite(size_t *x, size_t *y, uint16_t colour, size_t line_start, size_t line_width, size_t newline_height, bool double_size, const char **text)
 {
-    return SASPPU_draw_text_next(x, y, colour, line_start, line_width, newline_height, double_size, text, SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
+    return SASPPU_draw_text_next(x, y, colour, line_start, line_width, newline_height, double_size, text, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT);
 }
 
 SASPPUImageCode SASPPU_copy_background(size_t dst_x, size_t dst_y, size_t width, size_t height, size_t src_x, size_t src_y, bool double_size)
 {
-    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, SASPPU_background, BG_WIDTH, BG_HEIGHT, false);
+    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_copy_background_transparent(size_t dst_x, size_t dst_y, size_t width, size_t height, size_t src_x, size_t src_y, bool double_size)
 {
-    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, SASPPU_background, BG_WIDTH, BG_HEIGHT, true);
+    return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_blit_background(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint16_t *data)
 {
-    return SASPPU_blit(x, y, width, height, double_size, data, SASPPU_background, BG_WIDTH, BG_HEIGHT, false);
+    return SASPPU_blit(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_blit_background_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint16_t *data)
 {
-    return SASPPU_blit(x, y, width, height, double_size, data, SASPPU_background, BG_WIDTH, BG_HEIGHT, true);
+    return SASPPU_blit(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_paletted_background(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_paletted(x, y, width, height, double_size, data, SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, false);
+    return SASPPU_paletted(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_paletted_background_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_paletted(x, y, width, height, double_size, data, SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, true);
+    return SASPPU_paletted(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_compressed_background(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_compressed(x, y, width, height, double_size, data, SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, false);
+    return SASPPU_compressed(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, false);
 }
 SASPPUImageCode SASPPU_compressed_background_transparent(size_t x, size_t y, size_t width, size_t height, bool double_size, const uint8_t *data, const uint16_t *const palette, size_t bitdepth)
 {
-    return SASPPU_compressed(x, y, width, height, double_size, data, SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, true);
+    return SASPPU_compressed(x, y, width, height, double_size, data, (uint16_t *)SASPPU_background, palette, bitdepth, BG_WIDTH, BG_HEIGHT, true);
 }
 SASPPUImageCode SASPPU_fill_background(size_t x, size_t y, size_t width, size_t height, uint16_t colour)
 {
-    return SASPPU_fill(x, y, width, height, colour, SASPPU_background, BG_WIDTH, BG_HEIGHT);
+    return SASPPU_fill(x, y, width, height, colour, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT);
 }
 SASPPUImageCode SASPPU_draw_text_background(size_t x, size_t y, uint16_t colour, size_t line_width, size_t newline_height, bool double_size, const char *text)
 {
-    return SASPPU_draw_text(x, y, colour, line_width, newline_height, double_size, text, SASPPU_background, BG_WIDTH, BG_HEIGHT);
+    return SASPPU_draw_text(x, y, colour, line_width, newline_height, double_size, text, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT);
 }
 SASPPUImageCode SASPPU_draw_text_next_background(size_t *x, size_t *y, uint16_t colour, size_t line_start, size_t line_width, size_t newline_height, bool double_size, const char **text)
 {
-    return SASPPU_draw_text_next(x, y, colour, line_start, line_width, newline_height, double_size, text, SASPPU_background, BG_WIDTH, BG_HEIGHT);
-}
-
-void SASPPU_lower_main_state(MainState ms)
-{
-    SASPPU_main_state_bgcol_windows = ms.bgcol_windows;
-    SASPPU_main_state_mainscreen_colour = ms.mainscreen_colour;
-    SASPPU_main_state_subscreen_colour = ms.subscreen_colour;
-    SASPPU_main_state_window_1_left = ms.window_1_left;
-    SASPPU_main_state_window_1_right = ms.window_1_right;
-    SASPPU_main_state_window_2_left = ms.window_2_left;
-    SASPPU_main_state_window_2_right = ms.window_2_right;
-    SASPPU_main_state_flags = ms.flags;
-}
-MainState SASPPU_raise_main_state()
-{
-    MainState ms;
-    ms.bgcol_windows = SASPPU_main_state_bgcol_windows;
-    ms.mainscreen_colour = SASPPU_main_state_mainscreen_colour;
-    ms.subscreen_colour = SASPPU_main_state_subscreen_colour;
-    ms.window_1_left = SASPPU_main_state_window_1_left;
-    ms.window_1_right = SASPPU_main_state_window_1_right;
-    ms.window_2_left = SASPPU_main_state_window_2_left;
-    ms.window_2_right = SASPPU_main_state_window_2_right;
-    ms.flags = SASPPU_main_state_flags;
-    return ms;
-}
-
-void SASPPU_lower_cmath_state(CMathState cs)
-{
-    SASPPU_cmath_state_flags = cs.flags;
-    SASPPU_cmath_state_screen_fade = cs.screen_fade;
-}
-CMathState SASPPU_raise_cmath_state()
-{
-    CMathState cs;
-    cs.flags = SASPPU_cmath_state_flags;
-    cs.screen_fade = SASPPU_cmath_state_screen_fade;
-    return cs;
+    return SASPPU_draw_text_next(x, y, colour, line_start, line_width, newline_height, double_size, text, (uint16_t *)SASPPU_background, BG_WIDTH, BG_HEIGHT);
 }
 
 void SASPPU_gfx_reset()
 {
-    SASPPU_main_state_mainscreen_colour = 0x0000;
-    SASPPU_main_state_subscreen_colour = 0x0000;
-    SASPPU_main_state_window_1_left = 0;
-    SASPPU_main_state_window_1_right = 255;
-    SASPPU_main_state_window_2_left = 0;
-    SASPPU_main_state_window_2_right = 255;
-    SASPPU_main_state_bgcol_windows = 0x0F;
-    SASPPU_main_state_flags = 0;
+    memset(&SASPPU_main_state, 0, sizeof(SASPPU_main_state));
+    SASPPU_main_state.mainscreen_colour = 0x0000;
+    SASPPU_main_state.subscreen_colour = 0x0000;
+    SASPPU_main_state.window_1_left = 0;
+    SASPPU_main_state.window_1_right = 255;
+    SASPPU_main_state.window_2_left = 0;
+    SASPPU_main_state.window_2_right = 255;
+    SASPPU_main_state.bgcol_windows = 0x0F;
+    SASPPU_main_state.flags = 0;
 
+    memset(&SASPPU_bg0_state, 0, sizeof(SASPPU_bg0_state));
     SASPPU_bg0_state.x = 0;
     SASPPU_bg0_state.y = 0;
     SASPPU_bg0_state.windows = 0x0F;
     SASPPU_bg0_state.flags = 0;
+
+    memset(&SASPPU_bg1_state, 0, sizeof(SASPPU_bg1_state));
     SASPPU_bg1_state.x = 0;
     SASPPU_bg1_state.y = 0;
     SASPPU_bg1_state.windows = 0x0F;
     SASPPU_bg1_state.flags = 0;
-    SASPPU_cmath_state_screen_fade = 255;
-    SASPPU_cmath_state_flags = 0;
+
+    memset(&SASPPU_cmath_state, 0, sizeof(SASPPU_cmath_state));
+    SASPPU_cmath_state.screen_fade = 255;
+    SASPPU_cmath_state.flags = 0;
+
     SASPPU_hdma_enable = 0;
 
     memset(SASPPU_oam, 0, sizeof(SASPPU_oam));

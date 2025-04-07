@@ -1,3 +1,14 @@
+/**
+ * @file sasppu_help.h
+ * @author john hunter <moliveofscratch@gmail.com>
+ * @brief Additional helper functions and macros for SASPPU.
+ * @version 0.1
+ * @date 2025-04-05
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #ifndef SASPPU_HELP_H_
 #define SASPPU_HELP_H_
 
@@ -82,11 +93,6 @@ SASPPUImageCode SASPPU_compressed_background_transparent(size_t x, size_t y, siz
 SASPPUImageCode SASPPU_fill_background(size_t x, size_t y, size_t width, size_t height, uint16_t colour);
 SASPPUImageCode SASPPU_draw_text_background(size_t x, size_t y, uint16_t colour, size_t line_width, size_t newline_height, bool double_size, const char *text);
 SASPPUImageCode SASPPU_draw_text_next_background(size_t *x, size_t *y, uint16_t colour, size_t line_start, size_t line_width, size_t newline_height, bool double_size, const char **text);
-
-void SASPPU_lower_main_state(MainState ms);
-MainState SASPPU_raise_main_state();
-void SASPPU_lower_cmath_state(CMathState cs);
-CMathState SASPPU_raise_cmath_state();
 
 void SASPPU_gfx_reset();
 

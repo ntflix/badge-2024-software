@@ -47,7 +47,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(get_fps_obj, get_fps);
 #define TILDAGON_DISPLAY_WIDTH 240
 #define TILDAGON_DISPLAY_HEIGHT 240
 
-static uint8_t tildagon_fb[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2];
+static uint8_t tildagon_fb[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2] __attribute__((aligned(16)));
 static Ctx *tildagon_ctx = NULL;
 
 typedef enum
@@ -167,7 +167,7 @@ static mp_obj_t flip_sasppu_section(mp_obj_t section)
 {
     mp_uint_t i = mp_obj_int_get_uint_checked(section);
     // int64_t then = esp_timer_get_time();
-    SASPPU_render(tildagon_fb, i);
+    SASPPU_render((uint16x8_t *)(tildagon_fb), i);
     // int64_t now = esp_timer_get_time();
     // mp_printf(&mp_plat_print, "render sect %u time: %uus\n", i, now - then);
     fb_sect_state[i] = FB_RENDERED;
