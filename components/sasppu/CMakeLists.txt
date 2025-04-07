@@ -28,6 +28,8 @@ add_custom_target(generate_sasppu_gen ALL DEPENDS ${SASPPU_GEN})
 idf_component_get_property(sasppu_lib sasppu COMPONENT_LIB)
 add_dependencies(${sasppu_lib} generate_sasppu_gen)
 
+target_compile_options(${sasppu_lib} PRIVATE "-O3")
+
 set_source_files_properties(${SASPPU_GEN} PROPERTIES HEADER_FILE_ONLY ON)
 
 component_compile_options("-Wa,-I${CMAKE_CURRENT_SOURCE_DIR}")
