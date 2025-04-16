@@ -26,6 +26,8 @@ extern mask16x8_t SASPPU_window_cache[(240 / 8) * 2];
 #define VERIFY_INLINE_ASM 0
 #define USE_GCC_SIMD ((!USE_INLINE_ASM) | VERIFY_INLINE_ASM)
 
+#define QEMU_EMULATOR 0
+
 #define SIMD_ASSERT(index, cpu_val, simd_val)                                                                      \
     if (cpu_val[index] == simd_val[index])                                                                         \
     {                                                                                                              \

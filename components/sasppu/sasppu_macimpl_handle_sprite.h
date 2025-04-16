@@ -30,6 +30,10 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
 
     size_t offset = (size_t)(8 - (sprite->x & 0x7));
 
+#if QEMU_EMULATOR
+    offset = offset & 0x7;
+#endif
+
 #if USE_INLINE_ASM
     asm volatile inline("wur.sar_byte %[offset]" : : [offset] "r"(offset << 1));
 #endif
@@ -74,6 +78,12 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
 
     ssize_t start_x = (ssize_t)(sprite->x) / 8;
     ssize_t end_x = ((ssize_t)(sprite->x + (int16_t)(sprite_width))) / 8;
+
+    if ((sprite->x & 0x7) == 0)
+    {
+        start_x -= 1;
+        end_x -= 1;
+    }
 
     ssize_t x = end_x;
     do

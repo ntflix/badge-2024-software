@@ -9,13 +9,6 @@ from events.input import BUTTON_TYPES, ButtonDownEvent
 from system.eventbus import eventbus
 from system.scheduler.events import RequestStopAppEvent
 
-BLACK = 0
-WHITE = 0b0111111111111111
-RED = 0b0111110000000000
-GREEN = 0b0000001111100000
-BLUE = 0b0000000000011111
-GREY = 0b0100001000010000
-
 ASSET_PATH = "./apps/sasppu_test_cart/"
 
 class SASPPUTest(SASPPUApp):
@@ -32,14 +25,32 @@ class SASPPUTest(SASPPUApp):
         self.bg0.bind(0)
         self.init_bg0_map()
         self.init_sprites()
-        self.ms.mainscreen_colour = BLACK
-        #self.ms.bgcol_windows = sasppu.WINDOW_A
-        self.ms.flags = sasppu.MainState.BG0_ENABLE | sasppu.MainState.SPR0_ENABLE
-        sasppu.draw_text_background(90, 90, WHITE, 150, "Hello, World!", True)
-        with open(ASSET_PATH + "bg.bin", "rb") as f:
-            sasppu.blit_background(0, 0, 256, 256, f.read())
+
+        self.ms.mainscreen_colour = sasppu.TRANSPARENT_BLACK
+        self.ms.flags = sasppu.MainState.BG0_ENABLE | sasppu.MainState.BGCOL_WINDOW_ENABLE | sasppu.MainState.SPR0_ENABLE
+        self.cs.flags = sasppu.CMathState.CMATH_ENABLE | sasppu.CMathState.ADD_SUB_SCREEN | sasppu.CMathState.HALF_MAIN_SCREEN | sasppu.CMathState.FADE_ENABLE
+        self.ms.bgcol_windows = ((sasppu.WINDOW_B | sasppu.WINDOW_AB) << 4) | sasppu.WINDOW_A | sasppu.WINDOW_AB
+
+        self.bg0.flags = 0
+        self.bg0.windows = 0x0F
+        self.bg0.x = 0
+        self.bg0.y = 0
+
+        self.ms.window_1_left = 10
+        self.ms.window_1_right = 200
+        self.ms.window_2_left = 180
+        self.ms.window_2_right = 230
+
+        #with open(ASSET_PATH + "bg.bin", "rb") as f:
+        #    sasppu.blit_background(0, 0, 256, 256, f.read())
         with open(ASSET_PATH + "spr.bin", "rb") as f:
             sasppu.blit_sprite(0, 0, 32*8, 32, f.read())
+
+        test_text =  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo"
+
+        sasppu.fill_background(0, 0, self.bg0.WIDTH, self.bg0.HEIGHT, sasppu.grey555(5))
+        
+        sasppu.draw_text_background(10, 0, sasppu.WHITE, 220, test_text, True)
 
     def init_bg0_map(self):
         for i in range(sasppu.MAP_WIDTH * sasppu.MAP_HEIGHT):
