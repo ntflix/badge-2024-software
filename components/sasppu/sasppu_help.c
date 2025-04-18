@@ -211,7 +211,7 @@ static inline SASPPUImageCode SASPPU_draw_text_next(size_t *x, size_t *y, uint16
 
     if (*x != line_start)
     {
-        if (*x >= line_width)
+        if (*x >= (line_start + line_width))
         {
             *x = line_start;
             if (double_size)
