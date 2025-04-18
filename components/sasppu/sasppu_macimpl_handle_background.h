@@ -63,7 +63,7 @@ inline void IDENT(uint16x8_t *const scanline, int16_t y)
             " : : [bg_1_p] "r"(bg_1_p));
 #endif
 #if USE_GCC_SIMD
-                bg_1 = __builtin_shuffle(*bg_1_p, REVERSE_MASK);
+                bg_1 = SHUFFLE_1(*bg_1_p, REVERSE_MASK);
 #endif
 #if VERIFY_INLINE_ASM
                 CHECK_SIMD_Q0(bg_1);
@@ -122,7 +122,7 @@ inline void IDENT(uint16x8_t *const scanline, int16_t y)
                 " : : [bg_1_p] "r"(bg_1_p));
 #endif
 #if USE_GCC_SIMD
-                        bg_1 = __builtin_shuffle(*bg_1_p, REVERSE_MASK);
+                        bg_1 = SHUFFLE_1(*bg_1_p, REVERSE_MASK);
 #endif
 #if VERIFY_INLINE_ASM
                         CHECK_SIMD_Q0(bg_1);
@@ -148,7 +148,7 @@ inline void IDENT(uint16x8_t *const scanline, int16_t y)
             " : : [cmath_bit] "r"(&CMATH_BIT));
 #endif
 #if USE_GCC_SIMD
-                bg = __builtin_shuffle(bg_1, bg_2, VECTOR_SHUFFLES[offset_x]);
+                bg = SHUFFLE_2(bg_1, bg_2, VECTOR_SHUFFLES[offset_x]);
 #endif
 #if VERIFY_INLINE_ASM
                 CHECK_SIMD_Q2(bg);

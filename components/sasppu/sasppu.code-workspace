@@ -67,7 +67,9 @@
 			"sasppu_sprite.h": "c",
 			"*.tcc": "c",
 			"ostream": "c",
-			"sasppu_map.h": "c"
+			"sasppu_map.h": "c",
+			"stddef.h": "c",
+			"assert.h": "c"
 		}
 	}
 }

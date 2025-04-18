@@ -22,3 +22,14 @@ emcc ctx.c \
     --no-entry -flto -O3 \
     -o ctx.wasm
 
+python3 ../../components/sasppu/sasppu_generated.py sasppu_gen.h
+
+emcc sasppu_wasm.c \
+    -I ../../components/sasppu/ \
+    -I ../../components/sasppu/font/ \
+    -I ../../components/sasppu/font/ \
+    -I . \
+    -D SIMULATOR \
+    -s EXPORTED_FUNCTIONS=_SASPPU_render,_SASPPU_gfx_reset,_SASPPU_copy_sprite,_SASPPU_copy_sprite_transparent,_SASPPU_blit_sprite,_SASPPU_blit_sprite_transparent,_SASPPU_paletted_sprite,_SASPPU_paletted_sprite_transparent,_SASPPU_compressed_sprite,_SASPPU_compressed_sprite_transparent,_SASPPU_fill_sprite,_SASPPU_draw_text_sprite,_SASPPU_draw_text_next_sprite,_SASPPU_copy_background,_SASPPU_copy_background_transparent,_SASPPU_blit_background,_SASPPU_blit_background_transparent,_SASPPU_paletted_background,_SASPPU_paletted_background_transparent,_SASPPU_compressed_background,_SASPPU_compressed_background_transparent,_SASPPU_fill_background,_SASPPU_draw_text_background,_SASPPU_draw_text_next_background \
+    --no-entry -flto -O3 \
+    -o sasppu.wasm

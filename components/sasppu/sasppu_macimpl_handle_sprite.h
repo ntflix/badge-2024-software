@@ -149,8 +149,8 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
         uint16x8_t spr_1_high;
         {
             uint16x8_t spr_1_tmp = spr_1;
-            spr_1 = __builtin_shuffle(spr_1_tmp, spr_1_tmp, INTERLEAVE_MASK_LOW);
-            spr_1_high = __builtin_shuffle(spr_1_tmp, spr_1_tmp, INTERLEAVE_MASK_HIGH);
+            spr_1 = SHUFFLE_2(spr_1_tmp, spr_1_tmp, INTERLEAVE_MASK_LOW);
+            spr_1_high = SHUFFLE_2(spr_1_tmp, spr_1_tmp, INTERLEAVE_MASK_HIGH);
         }
 #endif
 #if VERIFY_INLINE_ASM
@@ -170,8 +170,8 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
 #if USE_GCC_SIMD
         {
             uint16x8_t spr_1_tmp = spr_1;
-            spr_1 = __builtin_shuffle(spr_1_high, REVERSE_MASK);
-            spr_1_high = __builtin_shuffle(spr_1_tmp, REVERSE_MASK);
+            spr_1 = SHUFFLE_1(spr_1_high, REVERSE_MASK);
+            spr_1_high = SHUFFLE_1(spr_1_tmp, REVERSE_MASK);
         }
 #endif
 #if VERIFY_INLINE_ASM
@@ -189,7 +189,7 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
                 " : : [cmath_bit] "r"(&CMATH_BIT));
 #endif
 #if USE_GCC_SIMD
-            spr_col = __builtin_shuffle(spr_1_high, spr_2, VECTOR_SHUFFLES[offset]);
+            spr_col = SHUFFLE_2(spr_1_high, spr_2, VECTOR_SHUFFLES[offset]);
 #endif
 #if VERIFY_INLINE_ASM
             CHECK_SIMD_Q2(spr_col);
@@ -225,7 +225,7 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
                 " : : [cmath_bit] "r"(&CMATH_BIT));
 #endif
 #if USE_GCC_SIMD
-            spr_col = __builtin_shuffle(spr_1, spr_1_high, VECTOR_SHUFFLES[offset]);
+            spr_col = SHUFFLE_2(spr_1, spr_1_high, VECTOR_SHUFFLES[offset]);
 #endif
 #if VERIFY_INLINE_ASM
             CHECK_SIMD_Q2(spr_col);
@@ -261,7 +261,7 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
             ");
 #endif
 #if USE_GCC_SIMD
-        spr_1 = __builtin_shuffle(spr_1, REVERSE_MASK);
+        spr_1 = SHUFFLE_1(spr_1, REVERSE_MASK);
 #endif
 #if VERIFY_INLINE_ASM
         CHECK_SIMD_Q3(spr_1);
@@ -285,7 +285,7 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
 #endif
 #endif
 #if USE_GCC_SIMD
-            spr_col = __builtin_shuffle(spr_1, spr_2, VECTOR_SHUFFLES[offset]);
+            spr_col = SHUFFLE_2(spr_1, spr_2, VECTOR_SHUFFLES[offset]);
 #endif
 #if VERIFY_INLINE_ASM
             CHECK_SIMD_Q2(spr_col);

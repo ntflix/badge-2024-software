@@ -6,7 +6,7 @@
 
 #define SASPPU_VERSION_MAJOR 1
 #define SASPPU_VERSION_MINOR 1
-#define SASPPU_VERSION_PATCH 0
+#define SASPPU_VERSION_PATCH 1
 
 // #define SASPPU_VERSION "SASPPU_VERSION_MAJOR.SASPPU_VERSION_MINOR.SASPPU_VERSION_PATCH"
 
@@ -112,7 +112,9 @@ extern uint16_t SASPPU_bg1[MAP_WIDTH * MAP_HEIGHT];
 
 extern uint16x8_t SASPPU_background[BG_WIDTH * BG_HEIGHT / 8];
 extern uint16x8_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT / 8];
-// extern uint16x8_t SASPPU_frame_buffer[240 * 240 / 8];
+#if SASPPU_FRAMEBUFFER
+extern uint16x8_t SASPPU_frame_buffer[240 * 240 / 8];
+#endif
 
 extern Sprite *SASPPU_sprite_cache[2][SPRITE_CACHE];
 

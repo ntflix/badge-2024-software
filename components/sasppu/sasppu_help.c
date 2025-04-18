@@ -407,5 +407,7 @@ void SASPPU_gfx_reset()
     memset(SASPPU_background, 0, sizeof(SASPPU_background));
     memset(SASPPU_sprites, 0, sizeof(SASPPU_sprites));
     memset(SASPPU_hdma_tables, 0, sizeof(SASPPU_hdma_tables));
-    // memset(SASPPU_frame_buffer, 0, sizeof(SASPPU_frame_buffer));
+#if SASPPU_FRAMEBUFFER
+    memset(SASPPU_frame_buffer, 0, sizeof(SASPPU_frame_buffer));
+#endif
 }

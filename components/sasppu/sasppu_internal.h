@@ -12,21 +12,41 @@
 #ifndef SASPPU_INTERNAL_H_
 #define SASPPU_INTERNAL_H_
 
+#ifndef SASPPU_ESP
+#define SASPPU_ESP 1
+#endif
+
+#ifndef SASPPU_FRAMEBUFFER
+#define SASPPU_FRAMEBUFFER 0
+#endif
+
+#ifndef USE_INLINE_ASM
+#define USE_INLINE_ASM 1
+#endif
+#ifndef VERIFY_INLINE_ASM
+#define VERIFY_INLINE_ASM 0
+#endif
+#ifndef USE_GCC_SIMD
+#define USE_GCC_SIMD ((!USE_INLINE_ASM) | VERIFY_INLINE_ASM)
+#endif
+
+#ifndef QEMU_EMULATOR
+#define QEMU_EMULATOR 0
+#endif
+
 #include "sasppu.h"
 #include "stddef.h"
 #include "assert.h"
+#if SASPPU_ESP
 #include "esp_log.h"
+#else
+#define ESP_LOGI
+#endif
 
 void SASPPU_assert_fail();
 
 extern uint16x8_t SASPPU_subscreen_scanline[240 / 8];
 extern mask16x8_t SASPPU_window_cache[(240 / 8) * 2];
-
-#define USE_INLINE_ASM 1
-#define VERIFY_INLINE_ASM 0
-#define USE_GCC_SIMD ((!USE_INLINE_ASM) | VERIFY_INLINE_ASM)
-
-#define QEMU_EMULATOR 0
 
 #define SIMD_ASSERT(index, cpu_val, simd_val)                                                                      \
     if (cpu_val[index] == simd_val[index])                                                                         \
@@ -103,6 +123,37 @@ extern const uint16x8_t REVERSE_MASK;
 extern const uint16x8_t INTERLEAVE_MASK_LOW;
 extern const uint16x8_t INTERLEAVE_MASK_HIGH;
 extern const uint16x8_t VECTOR_SHUFFLES[9];
+#endif
+
+#ifndef __builtin_shuffle
+static inline uint16x8_t SHUFFLE_1(uint16x8_t a, uint16x8_t shuf)
+{
+    uint16x8_t out = VBROADCAST(0);
+    for (int i = 0; i < 8; i++)
+    {
+        out[i] = a[shuf[i]];
+    }
+    return out;
+}
+static inline uint16x8_t SHUFFLE_2(uint16x8_t a, uint16x8_t b, uint16x8_t shuf)
+{
+    uint16x8_t out = VBROADCAST(0);
+    for (int i = 0; i < 8; i++)
+    {
+        if (shuf[i] < 8)
+        {
+            out[i] = a[shuf[i]];
+        }
+        else
+        {
+            out[i] = b[shuf[i] - 8];
+        }
+    }
+    return out;
+}
+#else
+#define SHUFFLE_1(a, shuf) __builtin_shuffle(a, shuf)
+#define SHUFFLE_2(a, b, shuf) __builtin_shuffle(a, b, shuf)
 #endif
 
 #endif // SASPPU_INTERNAL_H_
