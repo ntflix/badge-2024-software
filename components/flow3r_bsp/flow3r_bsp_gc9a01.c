@@ -551,10 +551,6 @@ esp_err_t flow3r_bsp_gc9a01_init(flow3r_bsp_gc9a01_t *gc9a01,
     if (ret != ESP_OK) {
         goto cleanup_spi_device;
     }
-    ret = flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
-    if (ret != ESP_OK) {
-        goto cleanup_spi_device;
-    }
 
     return ret;
 
@@ -600,15 +596,20 @@ static inline esp_err_t flow3r_bsp_gc9a01_blit_next(
 
 static inline esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01,
                                               flow3r_bsp_gc9a01_blit_t *blit,
-                                              const uint16_t *fb) {
+                                              const uint16_t *fb,
+                                              int i) {
     memset(blit, 0, sizeof(flow3r_bsp_gc9a01_blit_t));
 
     blit->gc9a01 = gc9a01;
     blit->fb = (const uint8_t *)fb;
     blit->left = 2 * 240 * 240 / 4;  // left in native bytes (16bpp)
 
-    //return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
-    return ESP_OK;
+    esp_err_t ret = flow3r_bsp_gc9a01_row_set(gc9a01, (i*60), (i*60) + 59);
+    if (ret != ESP_OK) {
+        return ret ;
+    }
+
+    return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
 }
 
 static inline uint8_t flow3r_bsp_gc9a01_blit_done(flow3r_bsp_gc9a01_blit_t *blit) {
@@ -623,9 +624,9 @@ static inline esp_err_t flow3r_bsp_gc9a01_blit_wait_done(
     return ret;
 }
 
-esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01, const void *fb) {
+esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01, const void *fb, int i) {
     flow3r_bsp_gc9a01_blit_t blit;
-    esp_err_t res = flow3r_bsp_gc9a01_blit_start(gc9a01, &blit, fb);
+    esp_err_t res = flow3r_bsp_gc9a01_blit_start(gc9a01, &blit, fb, i);
     if (res != ESP_OK) {
         return res;
     }

@@ -70,7 +70,7 @@ static portTASK_FUNCTION(vADisplayFlip, pvParameters)
                 xTaskNotifyWait(0, ULONG_MAX, NULL, portMAX_DELAY);
             }
 
-            flow3r_bsp_display_send_fb(tildagon_fb + (TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2 / 4) * i);
+            flow3r_bsp_display_send_fb(tildagon_fb + (TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2 / 4) * i, i);
             // int64_t now = esp_timer_get_time();
             // mp_printf(&mp_plat_print, "display sect %u flip time: %uus\n", i, now - then);
 
