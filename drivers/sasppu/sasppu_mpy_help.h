@@ -5,8 +5,8 @@
 #include "py/obj.h"
 #include "py/objarray.h"
 #include "py/objstr.h"
-#include "sasppu.h"
-#include "sasppu_help.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/help.h"
 #include "display.h"
 
 #include "sasppu_background.h"

@@ -2,7 +2,7 @@
 #include "st3m_counter.h"
 #include "flow3r_bsp.h"
 #include "mp_uctx.h"
-#include "sasppu.h"
+#include "sasppu/sasppu.h"
 #include "display.h"
 #include <math.h>
 
