@@ -1,16 +1,16 @@
 {
 	"folders": [
 		{
+			"path": "components/sasppu"
+		},
+		{
+			"path": "components/sasppu/sasppu-emu"
+		},
+		{
+			"path": "components/sasppu/sasppu-sys"
+		},
+		{
 			"path": "."
-		},
-		{
-			"path": "sasppu-emu"
-		},
-		{
-			"path": "sasppu-sys"
-		},
-		{
-			"path": "../.."
 		}
 	],
 	"settings": {
@@ -69,7 +69,14 @@
 			"ostream": "c",
 			"sasppu_map.h": "c",
 			"stddef.h": "c",
-			"assert.h": "c"
+			"assert.h": "c",
+			"__locale": "c",
+			"ios": "cpp",
+			"streambuf": "cpp",
+			"fstream": "cpp",
+			"semaphore": "cpp",
+			"valarray": "cpp",
+			"algorithm": "cpp"
 		}
 	}
 }

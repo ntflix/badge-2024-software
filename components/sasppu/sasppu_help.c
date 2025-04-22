@@ -390,7 +390,8 @@ void SASPPU_gfx_reset()
 
     memset(SASPPU_oam, 0, sizeof(SASPPU_oam));
 
-    for (size_t i = 0; i < SPRITE_COUNT; i++)
+    size_t i = 0;
+    do
     {
         SASPPU_oam[i].x = 0;
         SASPPU_oam[i].y = 0;
@@ -400,7 +401,7 @@ void SASPPU_gfx_reset()
         SASPPU_oam[i].graphics_y = 0;
         SASPPU_oam[i].windows = 0x0F;
         SASPPU_oam[i].flags = 0;
-    }
+    } while ((++i) < SPRITE_COUNT);
 
     memset(SASPPU_bg0, 0, sizeof(SASPPU_bg0));
     memset(SASPPU_bg1, 0, sizeof(SASPPU_bg1));

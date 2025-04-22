@@ -76,7 +76,8 @@ const uint16x8_t VECTOR_SHUFFLES[9] = {
 
 static inline void SASPPU_handle_hdma(uint8_t y)
 {
-    for (size_t table = 0; table < SASPPU_HDMA_TABLE_COUNT; table++)
+    size_t table = 0;
+    do
     {
         if (((SASPPU_hdma_enable >> table) & 1) == 0)
         {
@@ -122,13 +123,14 @@ static inline void SASPPU_handle_hdma(uint8_t y)
         }
         break;
         }
-    }
+    } while ((++table) < SASPPU_HDMA_TABLE_COUNT);
 }
 
 static inline void SASPPU_handle_sprite_cache(uint8_t y)
 {
     uint32_t sprites_indcies[2] = {0, 0};
-    for (size_t i = 0; i < SPRITE_COUNT; i++)
+    size_t i = 0;
+    do
     {
         Sprite *spr = &SASPPU_oam[i];
         uint8_t flags = spr->flags;
@@ -184,21 +186,22 @@ static inline void SASPPU_handle_sprite_cache(uint8_t y)
                 break;
             }
         }
-    }
-    for (; sprites_indcies[0] < SPRITE_CACHE; sprites_indcies[0]++)
+    } while ((++i) < SPRITE_COUNT);
+    do
     {
         SASPPU_sprite_cache[0][sprites_indcies[0]] = NULL;
-    }
-    for (; sprites_indcies[1] < SPRITE_CACHE; sprites_indcies[1]++)
+    } while ((++sprites_indcies[0]) < SPRITE_CACHE);
+    do
     {
         SASPPU_sprite_cache[1][sprites_indcies[1]] = NULL;
-    }
+    } while ((++sprites_indcies[1]) < SPRITE_CACHE);
 }
 
 void SASPPU_render(uint16x8_t *fb, uint8_t section)
 {
     // Screen is rendered top to bottom for sanity's sake
-    for (size_t y = 60 * section; y < 60 * (section + 1); y++)
+    size_t y = 60 * section;
+    do
     {
         if (SASPPU_hdma_enable)
         {
@@ -209,5 +212,5 @@ void SASPPU_render(uint16x8_t *fb, uint8_t section)
             SASPPU_handle_sprite_cache(y);
         }
         HANDLE_SCANLINE_LOOKUP[SASPPU_main_state.flags](fb + (y * 240 / 8), y);
-    }
+    } while ((++y) < (60 * (section + 1)));
 }

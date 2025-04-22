@@ -98,6 +98,7 @@ typedef struct
 #define WINDOW_ALL (0b1111)
 
 typedef uint16_t uint16x8_t __attribute__((vector_size(16)));
+typedef int16_t int16x8_t __attribute__((vector_size(16)));
 typedef uint16_t mask16x8_t __attribute__((vector_size(16)));
 
 extern MainState SASPPU_main_state;

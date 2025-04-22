@@ -90,7 +90,8 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
 #endif
 #if VERIFY_INLINE_ASM
     {
-        for (size_t x = 0; x < 240; x++)
+        size_t x = 0;
+        do
         {
             if ((x >= SASPPU_main_state.window_1_left) & (x <= SASPPU_main_state.window_1_right))
             {
@@ -108,7 +109,7 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
             {
                 assert(SASPPU_window_cache[((x >> 3) * 2) + 1][x & 0x7] == 0);
             }
-        }
+        } while ((++x) < 240);
     }
 #endif
 
@@ -136,7 +137,8 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
     uint16x8_t *maincol = &scanline[(240 / 8) - 1];
     uint16x8_t *subcol = &SASPPU_subscreen_scanline[(240 / 8) - 1];
 
-    for (ssize_t x = (240 / 8) - 1; x >= 0; x--)
+    ssize_t x = (240 / 8) - 1;
+    do
     {
 #if BGCOL_ENABLE
 #if USE_INLINE_ASM
@@ -168,21 +170,24 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
         *(subcol--) = vsubcol;
 #endif
 #endif
-    }
+    } while ((--x) >= 0);
 
 #if BG0_ENABLE
     handle_bg0(scanline, y);
 #endif
 
 #if SPR0_ENABLE
-    for (Sprite *const *spr = &SASPPU_sprite_cache[0][SPRITE_CACHE - 1]; spr >= &SASPPU_sprite_cache[0][0]; spr--)
     {
-        Sprite *const sprite = *spr;
-        if (!sprite)
+        Sprite *const *spr = &SASPPU_sprite_cache[0][SPRITE_CACHE - 1];
+        do
         {
-            continue;
-        }
-        HANDLE_SPRITE_LOOKUP[sprite->flags >> 2](scanline, y, sprite);
+            Sprite *const sprite = *spr;
+            if (!sprite)
+            {
+                continue;
+            }
+            HANDLE_SPRITE_LOOKUP[sprite->flags >> 2](scanline, y, sprite);
+        } while ((--spr) >= &SASPPU_sprite_cache[0][0]);
     }
 #endif
 
@@ -191,14 +196,17 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
 #endif
 
 #if SPR1_ENABLE
-    for (Sprite *const *spr = &SASPPU_sprite_cache[1][SPRITE_CACHE - 1]; spr >= &SASPPU_sprite_cache[1][0]; spr--)
     {
-        Sprite *const sprite = *spr;
-        if (!sprite)
+        Sprite *const *spr = &SASPPU_sprite_cache[1][SPRITE_CACHE - 1];
+        do
         {
-            continue;
-        }
-        HANDLE_SPRITE_LOOKUP[sprite->flags >> 2](scanline, y, sprite);
+            Sprite *const sprite = *spr;
+            if (!sprite)
+            {
+                continue;
+            }
+            HANDLE_SPRITE_LOOKUP[sprite->flags >> 2](scanline, y, sprite);
+        } while ((--spr) >= &SASPPU_sprite_cache[1][0]);
     }
 #endif
 

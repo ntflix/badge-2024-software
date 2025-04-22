@@ -37,6 +37,7 @@
 #include "sasppu.h"
 #include "stddef.h"
 #include "assert.h"
+#include "unistd.h"
 #if SASPPU_ESP
 #include "esp_log.h"
 #else
@@ -129,16 +130,18 @@ extern const uint16x8_t VECTOR_SHUFFLES[9];
 static inline uint16x8_t SHUFFLE_1(uint16x8_t a, uint16x8_t shuf)
 {
     uint16x8_t out = VBROADCAST(0);
-    for (int i = 0; i < 8; i++)
+    ssize_t i = 7;
+    do
     {
         out[i] = a[shuf[i]];
-    }
+    } while ((--i) >= 0);
     return out;
 }
 static inline uint16x8_t SHUFFLE_2(uint16x8_t a, uint16x8_t b, uint16x8_t shuf)
 {
     uint16x8_t out = VBROADCAST(0);
-    for (int i = 0; i < 8; i++)
+    ssize_t i = 7;
+    do
     {
         if (shuf[i] < 8)
         {
@@ -148,7 +151,7 @@ static inline uint16x8_t SHUFFLE_2(uint16x8_t a, uint16x8_t b, uint16x8_t shuf)
         {
             out[i] = b[shuf[i] - 8];
         }
-    }
+    } while ((--i) >= 0);
     return out;
 }
 #else

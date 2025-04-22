@@ -82,7 +82,8 @@ inline void IDENT(uint16x8_t *const scanline, int16_t y)
 #endif
         }
 
-        for (ssize_t x = (240 / 8) - 1; x >= 0; x--)
+        ssize_t x = (240 / 8) - 1;
+        do
         {
 #if USE_INLINE_ASM
                 asm volatile inline("mv.qr q1, q0");
@@ -181,7 +182,7 @@ inline void IDENT(uint16x8_t *const scanline, int16_t y)
 #else
                     (scanline, x, bg);
 #endif
-        }
+        } while ((--x) >= 0);
 }
 
 #undef IDENT
