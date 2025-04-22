@@ -300,16 +300,23 @@ fn handle_windows<const LOGIC: u8>(
     x: usize,
     col_in: u16x8,
 ) {
-    let main_window = get_window(LOGIC & 0x0F, window_1[x], window_2[x])
-            & col_in.simd_ne(u16x8::splat(0));
+    let main_window =
+        get_window(LOGIC & 0x0F, window_1[x], window_2[x]) & col_in.simd_ne(u16x8::splat(0));
     main_col[x] = main_window.select(col_in, main_col[x]);
 
-    let sub_window = get_window(LOGIC >> 4, window_1[x], window_2[x])
-            & col_in.simd_ne(u16x8::splat(0));
+    let sub_window =
+        get_window(LOGIC >> 4, window_1[x], window_2[x]) & col_in.simd_ne(u16x8::splat(0));
     sub_col[x] = sub_window.select(col_in, sub_col[x]);
 }
 
-type HandleWindowType = fn(&[mask16x8; 240 / 8], &[mask16x8; 240 / 8], &mut [u16x8; 240 / 8], &mut [u16x8; 240 / 8], usize, u16x8);
+type HandleWindowType = fn(
+    &[mask16x8; 240 / 8],
+    &[mask16x8; 240 / 8],
+    &mut [u16x8; 240 / 8],
+    &mut [u16x8; 240 / 8],
+    usize,
+    u16x8,
+);
 
 seq!(N in 0..256 {
 static HANDLE_WINDOW_LOOKUP: [HandleWindowType; 256] =
@@ -336,7 +343,6 @@ fn swimzleoo(a: u16x8, b: u16x8, offset: usize) -> u16x8 {
         5 => simd_swizzle!(a, b, [5, 6, 7, 8, 9, 10, 11, 12]),
         6 => simd_swizzle!(a, b, [6, 7, 8, 9, 10, 11, 12, 13]),
         7 => simd_swizzle!(a, b, [7, 8, 9, 10, 11, 12, 13, 14]),
-        8 => b,
         _ => unreachable!(),
     }
 }
@@ -392,24 +398,12 @@ fn handle_bg(
             bg |= u16x8::splat(0x8000); // q5; q4, q5 -> q4
         }
 
-        window_handler(
-            window_1,
-            window_2,
-            main_col,
-            sub_col,
-            x,
-            bg,
-        );
+        window_handler(window_1, window_2, main_col, sub_col, x, bg);
     }
 }
 
 #[inline]
-fn handle_sprite<
-    const FLIP_X: bool,
-    const FLIP_Y: bool,
-    const CMATH: bool,
-    const DOUBLE: bool,
->(
+fn handle_sprite<const FLIP_X: bool, const FLIP_Y: bool, const CMATH: bool, const DOUBLE: bool>(
     sprite: &Sprite,
     graphics: &SpritePlane,
     main_col: &mut [u16x8; 240 / 8], // q0
@@ -427,7 +421,7 @@ fn handle_sprite<
         sprite.width
     };
 
-    let offset = (8 - (sprite.x & 0x7i16)) as usize;
+    let offset = (8 - (sprite.x & 0x7i16)) as usize & 0x07;
 
     let mut offset_y = y - sprite.y;
     if FLIP_Y {
@@ -438,31 +432,29 @@ fn handle_sprite<
     }
     let offset_y = offset_y as usize;
 
-    let mut x_pos = if FLIP_X {
-        -8
-    } else {
-        sprite.width as isize
-    };
+    let mut x_pos = if FLIP_X { -8 } else { sprite.width as isize };
 
     let mut spr_1 = u16x8::splat(0);
     let mut spr_2;
 
-    let start_x = (sprite.x as isize) / 8;
-    let end_x = ((sprite.x + sprite_width as i16) as isize) / 8;
+    let mut start_x = (sprite.x as isize) / 8;
+    let mut end_x = ((sprite.x + sprite_width as i16) as isize) / 8;
+
+    if (sprite.x & 0x7) == 0 {
+        start_x -= 1;
+        end_x -= 1;
+    }
+
+    let start_x = start_x;
+    let start_x = start_x;
 
     let mut x = end_x;
     while x >= start_x {
-        x_pos = if FLIP_X {
-            x_pos + 8
-        } else {
-            x_pos - 8
-        };
+        x_pos = if FLIP_X { x_pos + 8 } else { x_pos - 8 };
 
         spr_2 = spr_1;
 
-        spr_1 = if (FLIP_X && x_pos >= sprite.width as isize)
-            || (!FLIP_X && x_pos < 0)
-        {
+        spr_1 = if (FLIP_X && x_pos >= sprite.width as isize) || (!FLIP_X && x_pos < 0) {
             // q5
             u16x8::splat(0)
         } else {
@@ -486,12 +478,7 @@ fn handle_sprite<
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1,
-                    window_2,
-                    main_col,
-                    sub_col,
-                    x as usize,
-                    spr_col,
+                    window_1, window_2, main_col, sub_col, x as usize, spr_col,
                 );
             }
             x -= 1;
@@ -504,12 +491,7 @@ fn handle_sprite<
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1,
-                    window_2,
-                    main_col,
-                    sub_col,
-                    x as usize,
-                    spr_col,
+                    window_1, window_2, main_col, sub_col, x as usize, spr_col,
                 );
             }
             x -= 1;
@@ -526,12 +508,7 @@ fn handle_sprite<
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1,
-                    window_2,
-                    main_col,
-                    sub_col,
-                    x as usize,
-                    spr_col,
+                    window_1, window_2, main_col, sub_col, x as usize, spr_col,
                 );
             }
             x -= 1;
