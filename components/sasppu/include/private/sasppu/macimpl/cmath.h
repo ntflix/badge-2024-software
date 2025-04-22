@@ -34,29 +34,29 @@
 #ifndef SASPPU_MACIMPL_CMATH_H_
 #define SASPPU_MACIMPL_CMATH_H_
 
-#define CMATH_HELPER_SPLIT_COL(out_r, out_g, out_b, col_in)        \
-    int16x8_t out_r;                                               \
-    int16x8_t out_g;                                               \
-    int16x8_t out_b;                                               \
-    static const uint16x8_t mask = VBROADCAST(0b0111110000000000); \
-    {                                                              \
-        __typeof__(col_in) _col_in = (col_in);                     \
-        out_r = (int16x8_t)((_col_in << 0) & mask);                \
-        out_g = (int16x8_t)((_col_in << 5) & mask);                \
-        out_b = (int16x8_t)((_col_in << 10) & mask);               \
+#define CMATH_HELPER_SPLIT_COL(out_r, out_g, out_b, col_in)            \
+    int16x8_t out_r;                                                   \
+    int16x8_t out_g;                                                   \
+    int16x8_t out_b;                                                   \
+    {                                                                  \
+        static const uint16x8_t mask = VBROADCAST(0b0111110000000000); \
+        __typeof__(col_in) _col_in = (col_in);                         \
+        out_r = (int16x8_t)((_col_in << 0) & mask);                    \
+        out_g = (int16x8_t)((_col_in << 5) & mask);                    \
+        out_b = (int16x8_t)((_col_in << 10) & mask);                   \
     }
 
-#define CMATH_HELPER_RECOMBINE_COL(in_r, in_g, in_b, col_out)                      \
-    static const uint16x8_t mask = VBROADCAST(0b0111110000000000);                 \
-    {                                                                              \
-        uint16x8_t _in_r = (uint16x8_t)(in_r);                                     \
-        uint16x8_t _in_g = (uint16x8_t)(in_g);                                     \
-        uint16x8_t _in_b = (uint16x8_t)(in_b);                                     \
-        _in_r &= mask;                                                             \
-        _in_g &= mask;                                                             \
-        _in_b &= mask;                                                             \
-        uint16x8_t col_out_unflipped = (_in_r << 1) | (_in_g >> 4) | (_i_b >> 10); \
-        col_out = (col_out_unflipped << 8) & (col_out_unflipped >> 8);             \
+#define CMATH_HELPER_RECOMBINE_COL(in_r, in_g, in_b, col_out)                       \
+    {                                                                               \
+        static const uint16x8_t mask = VBROADCAST(0b0111110000000000);              \
+        uint16x8_t _in_r = (uint16x8_t)(in_r);                                      \
+        uint16x8_t _in_g = (uint16x8_t)(in_g);                                      \
+        uint16x8_t _in_b = (uint16x8_t)(in_b);                                      \
+        _in_r &= mask;                                                              \
+        _in_g &= mask;                                                              \
+        _in_b &= mask;                                                              \
+        uint16x8_t col_out_unflipped = (_in_r << 1) | (_in_g >> 4) | (_in_b >> 10); \
+        col_out = (col_out_unflipped << 8) & (col_out_unflipped >> 8);              \
     }
 
 #define CMATH_HELPER_ADD_SINGLE(out, sub)                   \
@@ -64,14 +64,16 @@
         out += sub;                                         \
         static const int16x8_t zero = VBROADCAST(0);        \
         static const int16x8_t max = VBROADCAST(INT16_MAX); \
-        out = (out < zero) ? max : out;                     \
+        mask16x8_t choose = (out < zero);                   \
+        out = (max & choose) | (out & (~choose));           \
     }
 
 #define CMATH_HELPER_SUB_SINGLE(out, sub)            \
     {                                                \
         out -= sub;                                  \
         static const int16x8_t zero = VBROADCAST(0); \
-        out = (out < zero) ? zero : out;             \
+        mask16x8_t choose = (out < zero);            \
+        out = (zero & choose) | (out & (~choose));   \
     }
 
 #define CMATH_HELPER_DOUBLE_SCREEN(out_r, out_g, out_b) \
@@ -195,7 +197,7 @@ static void IDENT(uint16x8_t *const scanline)
 #else
         CMATH_HELPER_SPLIT_COL(main_r, main_g, main_b, *maincol);
 #if CMATH_ENABLE
-        static const cmath_bit = VBROADCAST(0x8000);
+        static const uint16x8_t cmath_bit = VBROADCAST(0x8000);
         mask16x8_t use_cmath = *maincol >= cmath_bit;
         CMATH_HELPER_SPLIT_COL(sub_r, sub_g, sub_b, *(subcol--));
 
@@ -222,9 +224,9 @@ static void IDENT(uint16x8_t *const scanline)
         CMATH_HELPER_SUB_SCREEN(main_r, main_g, main_b, sub_r, sub_g, sub_b);
 #endif
 
-        main_r = use_cmath ? main_r : main_r_bak;
-        main_g = use_cmath ? main_g : main_g_bak;
-        main_b = use_cmath ? main_b : main_b_bak;
+        main_r = (main_r & use_cmath) | (main_r_bak & (~use_cmath));
+        main_g = (main_g & use_cmath) | (main_g_bak & (~use_cmath));
+        main_b = (main_b & use_cmath) | (main_b_bak & (~use_cmath));
 #endif
 #if FADE_ENABLE
         int16x8_t fade = VBROADCAST((int16_t)(SASPPU_cmath_state.screen_fade));
