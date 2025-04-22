@@ -10,7 +10,7 @@ idf_component_register(
     SRCS 
         sasppu_help.c
         sasppu_fast.S
-        sasppu_render.c
+        sasppu.c
     INCLUDE_DIRS
         .
     REQUIRES
