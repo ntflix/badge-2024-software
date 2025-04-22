@@ -1,5 +1,5 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 
 // SASPPU_HANDLE_SCANLINE(IDENT, BG0_ENABLE, BG1_ENABLE, SPR0_ENABLE, SPR1_ENABLE, CMATH_ENABLE, BGCOL_ENABLE)
 #ifndef IDENT
@@ -128,7 +128,7 @@ static void IDENT(uint16x8_t *const scanline, int16_t y)
         " : : [main_state] "r"(&SASPPU_main_state));
 #else
 #if BGCOL_ENABLE
-    const uint16x8_t zero = VBROADCAST(0);
+    static const uint16x8_t zero = VBROADCAST(0);
 #endif
     uint16x8_t vsubcol = VBROADCAST(SASPPU_main_state.subscreen_colour);
     uint16x8_t vmaincol = VBROADCAST(SASPPU_main_state.subscreen_colour);

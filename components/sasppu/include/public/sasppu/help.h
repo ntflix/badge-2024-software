@@ -1,18 +1,18 @@
 /**
- * @file sasppu_help.h
+ * @file help.h
  * @author john hunter <moliveofscratch@gmail.com>
  * @brief Additional helper functions and macros for SASPPU.
  * @version 0.1
  * @date 2025-04-05
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 
 #ifndef SASPPU_HELP_H_
 #define SASPPU_HELP_H_
 
-#include "sasppu.h"
+#include "sasppu/sasppu.h"
 #include "stddef.h"
 
 #define SASPPU_CMATH(col) ((col) | 0x8000)

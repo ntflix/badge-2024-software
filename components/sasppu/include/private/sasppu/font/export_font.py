@@ -83,7 +83,7 @@ for code in range(0x20, 0x7F):
         raise RuntimeError(chr(code))
 with open("encoded.bin", 'wb') as f:
     f.write(encoded_stream)
-with open("font_metadata.h", 'w') as f:
+with open("metadata.h", 'w') as f:
     print("""
 #pragma once
 #include <stdint.h>
@@ -93,7 +93,7 @@ typedef struct
     uint8_t height;
     size_t offset;
 } CharacterData;""", file=f)
-    print("const static CharacterData CHARACTER_DATA[] = {", file=f)
+    print("static const CharacterData CHARACTER_DATA[] = {", file=f)
     for item in metadata:
         print("{.width=" + str(item[0]) + ",.height=" + str(item[1]) + ",.offset=" + str(item[2]) + "},", file=f)
     print("};", file=f)

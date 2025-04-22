@@ -1,10 +1,10 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 #include "stdint.h"
 #include "stddef.h"
 #include "stdbool.h"
 
-#include "sasppu_gen.h"
+#include "sasppu/gen.h"
 
 #if SASPPU_ESP
 #include "esp_attr.h"
@@ -25,9 +25,6 @@ uint16_t SASPPU_bg1[MAP_WIDTH * MAP_HEIGHT];
 
 EXT_RAM_BSS_ATTR uint16x8_t SASPPU_background[BG_WIDTH * BG_HEIGHT / 8];
 EXT_RAM_BSS_ATTR uint16x8_t SASPPU_sprites[SPR_WIDTH * SPR_HEIGHT / 8];
-#if SASPPU_FRAMEBUFFER
-EXT_RAM_BSS_ATTR uint16x8_t SASPPU_frame_buffer[240 * 240 / 8];
-#endif
 
 Sprite *SASPPU_sprite_cache[2][SPRITE_CACHE];
 

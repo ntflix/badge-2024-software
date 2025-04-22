@@ -1,4 +1,2 @@
-sasppu_gen.inc
-font/export/
-font/encoded.bin
-font/metadata.txt
+include/private/sasppu/font/export/
+include/private/sasppu/font/encoded.bin

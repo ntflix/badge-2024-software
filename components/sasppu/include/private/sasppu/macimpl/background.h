@@ -1,5 +1,5 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 
 #include "assert.h"
 

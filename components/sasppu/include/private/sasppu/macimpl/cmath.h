@@ -1,5 +1,5 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 
 // SASPPU_HANDLE_CMATH(IDENT, HALF_MAIN_SCREEN, DOUBLE_MAIN_SCREEN, HALF_SUB_SCREEN, DOUBLE_SUB_SCREEN, ADD_SUB_SCREEN, SUB_SUB_SCREEN, FADE_ENABLE, CMATH_ENABLE)
 #ifndef IDENT
@@ -31,8 +31,8 @@
 #define CMATH_ENABLE 1
 #endif
 
-#ifndef SASPPU_CMATH_MACROS_H_
-#define SASPPU_CMATH_MACROS_H_
+#ifndef SASPPU_MACIMPL_CMATH_H_
+#define SASPPU_MACIMPL_CMATH_H_
 
 #define CMATH_HELPER_SPLIT_COL(out_r, out_g, out_b, col_in)        \
     int16x8_t out_r;                                               \
@@ -109,12 +109,12 @@
         main_col = ((main_col & u16x8::splat(0b0111111111100000)) << 1) | (main_col[x] & u16x8::splat(0b00011111)); \
     }
 
-#endif // SASPPU_CMATH_MACROS_H_
+#endif // SASPPU_MACIMPL_CMATH_H_
 
 static void IDENT(uint16x8_t *const scanline)
 {
 #if USE_INLINE_ASM
-    asm volatile inline(".include \"sasppu_handle_cmath.i\"");
+    asm volatile inline(".include \"sasppu/asm/cmath.i\"");
 #endif
 
     uint16x8_t *maincol = &scanline[(240 / 8) - 1];

@@ -14,7 +14,7 @@ def generate_window_jump_table(f):
             f.write("#define IDENT " + str(ident) + "\n")
             f.write("#define LOGIC_MAIN " + str(window_main) + "\n")
             f.write("#define LOGIC_SUB " + str(window_sub) + "\n")
-            f.write("#include \"sasppu_macimpl_handle_window.h\"\n")
+            f.write("#include \"sasppu/macimpl/window.h\"\n")
 
     f.write("const HandleWindowType HANDLE_WINDOW_LOOKUP[256] = {\n")
     for ident in idents:
@@ -40,7 +40,7 @@ def generate_sprite_jump_table(f):
                     f.write("#define CMATH " + str(c_math) + "\n")
                     f.write("#define FLIP_Y " + str(flip_y) + "\n")
                     f.write("#define FLIP_X " + str(flip_x) + "\n")
-                    f.write("#include \"sasppu_macimpl_handle_sprite.h\"\n")
+                    f.write("#include \"sasppu/macimpl/sprite.h\"\n")
 
     f.write("const HandleSpriteType HANDLE_SPRITE_LOOKUP[16] = {\n")
     for ident in idents:
@@ -78,7 +78,7 @@ def generate_cmath_jump_table(f):
                                     f.write("#define HALF_SUB_SCREEN " + str(ss_half) + "\n")
                                     f.write("#define DOUBLE_MAIN_SCREEN " + str(ms_double) + "\n")
                                     f.write("#define HALF_MAIN_SCREEN " + str(ms_half) + "\n")
-                                    f.write("#include \"sasppu_macimpl_handle_cmath.h\"\n")
+                                    f.write("#include \"sasppu/macimpl/cmath.h\"\n")
 
     f.write("const HandleCMathType HANDLE_CMATH_LOOKUP[256] = {\n")
     for ident in idents:
@@ -110,7 +110,7 @@ def generate_scanline_jump_table(f):
                             f.write("#define BG0_ENABLE " + str(bg0_enable) + "\n")
                             f.write("#define SPR1_ENABLE " + str(spr1_enable) + "\n")
                             f.write("#define SPR0_ENABLE " + str(spr0_enable) + "\n")
-                            f.write("#include \"sasppu_macimpl_handle_scanline.h\"\n")
+                            f.write("#include \"sasppu/macimpl/scanline.h\"\n")
 
     f.write("const HandleScanlineType HANDLE_SCANLINE_LOOKUP[64] = {\n")
     for ident in idents:
@@ -120,10 +120,10 @@ def generate_scanline_jump_table(f):
 def generate_background(f):
     f.write("#define IDENT handle_bg0\n")
     f.write("#define BG_INDEX 0\n")
-    f.write("#include \"sasppu_macimpl_handle_background.h\"\n")
+    f.write("#include \"sasppu/macimpl/background.h\"\n")
     f.write("#define IDENT handle_bg1\n")
     f.write("#define BG_INDEX 1\n")
-    f.write("#include \"sasppu_macimpl_handle_background.h\"\n")
+    f.write("#include \"sasppu/macimpl/background.h\"\n")
 
 with open(sys.argv[1], "w") as f:
     generate_window_jump_table(f)

@@ -16,10 +16,6 @@
 #define SASPPU_ESP 1
 #endif
 
-#ifndef SASPPU_FRAMEBUFFER
-#define SASPPU_FRAMEBUFFER 0
-#endif
-
 #ifndef USE_INLINE_ASM
 #define USE_INLINE_ASM 1
 #endif
@@ -34,7 +30,7 @@
 #define QEMU_EMULATOR 0
 #endif
 
-#include "sasppu.h"
+#include "sasppu/sasppu.h"
 #include "stddef.h"
 #include "assert.h"
 #include "unistd.h"

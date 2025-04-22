@@ -1,5 +1,5 @@
-#include "sasppu_help.h"
-#include "sasppu.h"
+#include "sasppu/help.h"
+#include "sasppu/sasppu.h"
 #include "stdint.h"
 #include "stddef.h"
 #include "stdbool.h"
@@ -171,8 +171,8 @@ static inline SASPPUImageCode SASPPU_fill(size_t x, size_t y, size_t width, size
     return SASPPU_IC_Success;
 }
 
-#include "font/font.h"
-#include "font/font_metadata.h"
+#include "sasppu/font/font.h"
+#include "sasppu/font/metadata.h"
 
 static inline SASPPUImageCode SASPPU_draw_text_next(size_t *x, size_t *y, uint16_t colour, size_t line_start, size_t line_width, size_t newline_height, bool double_size, const char **text, uint16_t *const buffer, size_t buffer_width, size_t buffer_height)
 {
@@ -408,7 +408,4 @@ void SASPPU_gfx_reset()
     memset(SASPPU_background, 0, sizeof(SASPPU_background));
     memset(SASPPU_sprites, 0, sizeof(SASPPU_sprites));
     memset(SASPPU_hdma_tables, 0, sizeof(SASPPU_hdma_tables));
-#if SASPPU_FRAMEBUFFER
-    memset(SASPPU_frame_buffer, 0, sizeof(SASPPU_frame_buffer));
-#endif
 }

@@ -1,5 +1,5 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 #include <unistd.h>
 
 // SASPPU_HANDLE_SPRITE(IDENT, FLIP_X, FLIP_Y, CMATH, DOUBLE)
@@ -61,7 +61,7 @@ static void IDENT(uint16x8_t *const scanline, const int16_t y, Sprite *const spr
 #endif
 #endif
 #if USE_GCC_SIMD
-    const uint16x8_t zero = VBROADCAST(0);
+    static const uint16x8_t zero = VBROADCAST(0);
     uint16x8_t spr_1 = zero;
     uint16x8_t spr_2;
     uint16x8_t spr_col;

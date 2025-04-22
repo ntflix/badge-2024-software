@@ -7,7 +7,7 @@ typedef struct
     uint8_t height;
     size_t offset;
 } CharacterData;
-const static CharacterData CHARACTER_DATA[] = {
+static const CharacterData CHARACTER_DATA[] = {
 {.width=6,.height=17,.offset=0},
 {.width=3,.height=17,.offset=13},
 {.width=5,.height=17,.offset=20},

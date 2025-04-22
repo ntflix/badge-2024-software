@@ -1,5 +1,5 @@
-#include "sasppu.h"
-#include "sasppu_internal.h"
+#include "sasppu/sasppu.h"
+#include "sasppu/internal.h"
 
 // SASPPU_HANDLE_WINDOW(IDENT, LOGIC)
 #ifndef IDENT
@@ -18,7 +18,7 @@
 static void IDENT(uint16x8_t *const scanline, uint16_t x)
 {
     asm volatile("                                                                                   \n\t \
-        .include \"sasppu_window_macros.i\"                                                 \n\t \
+        .include \"sasppu/asm/window.i\"                                                 \n\t \
         window_macro %[logic_main], %[logic_sub], %[window_index], %[maincol], %[subcol]    \n\t \
         " : : [maincol] "r"(&scanline[x]),
                  [subcol] "r"(&SASPPU_subscreen_scanline[x]),
@@ -29,7 +29,7 @@ static void IDENT(uint16x8_t *const scanline, uint16_t x)
 #else
 static void IDENT(uint16x8_t *const scanline, uint16_t x, uint16x8_t col)
 {
-    const uint16x8_t zero = VBROADCAST(0);
+    static const uint16x8_t zero = VBROADCAST(0);
 #define window_logic_window(enable, w1, w2) ((enable) ? ((w1) & (w2)) : zero)
 #define window_macro(enable_a, enable_b, enable_c, enable_d, w1, w2) \
     (window_logic_window((enable_a), (w1), ~(w2)) |                  \
