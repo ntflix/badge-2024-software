@@ -293,22 +293,23 @@ fn get_window(logic: u8, window_1: mask16x8, window_2: mask16x8) -> mask16x8 {
 
 #[inline]
 fn handle_windows<const LOGIC: u8>(
-    window_1: mask16x8,
-    window_2: mask16x8,
-    main_col: &mut u16x8,
-    sub_col: &mut u16x8,
+    window_1: &[mask16x8; 240 / 8],
+    window_2: &[mask16x8; 240 / 8],
+    main_col: &mut [u16x8; 240 / 8],
+    sub_col: &mut [u16x8; 240 / 8],
+    x: usize,
     col_in: u16x8,
 ) {
-    let main_window = get_window(LOGIC & 0x0F, window_1, window_2) // q5, q6, q7 -> q5
+    let main_window = get_window(LOGIC & 0x0F, window_1[x], window_2[x])
             & col_in.simd_ne(u16x8::splat(0));
-    *main_col = main_window.select(col_in, *main_col);
+    main_col[x] = main_window.select(col_in, main_col[x]);
 
-    let sub_window = get_window(LOGIC >> 4, window_1, window_2) // q5, q6, q7 -> q5
+    let sub_window = get_window(LOGIC >> 4, window_1[x], window_2[x])
             & col_in.simd_ne(u16x8::splat(0));
-    *sub_col = sub_window.select(col_in, *sub_col);
+    sub_col[x] = sub_window.select(col_in, sub_col[x]);
 }
 
-type HandleWindowType = fn(mask16x8, mask16x8, &mut u16x8, &mut u16x8, u16x8);
+type HandleWindowType = fn(&[mask16x8; 240 / 8], &[mask16x8; 240 / 8], &mut [u16x8; 240 / 8], &mut [u16x8; 240 / 8], usize, u16x8);
 
 seq!(N in 0..256 {
 static HANDLE_WINDOW_LOOKUP: [HandleWindowType; 256] =
@@ -392,10 +393,11 @@ fn handle_bg(
         }
 
         window_handler(
-            window_1[x],
-            window_2[x],
-            &mut main_col[x],
-            &mut sub_col[x],
+            window_1,
+            window_2,
+            main_col,
+            sub_col,
+            x,
             bg,
         );
     }
@@ -403,10 +405,10 @@ fn handle_bg(
 
 #[inline]
 fn handle_sprite<
-    const THIS_SPR_FLIP_X: bool,
-    const THIS_SPR_FLIP_Y: bool,
-    const THIS_SPR_C_MATH: bool,
-    const THIS_SPR_DOUBLE: bool,
+    const FLIP_X: bool,
+    const FLIP_Y: bool,
+    const CMATH: bool,
+    const DOUBLE: bool,
 >(
     sprite: &Sprite,
     graphics: &SpritePlane,
@@ -419,7 +421,7 @@ fn handle_sprite<
     assert_eq!(sprite.width & 0x7, 0);
     assert!(sprite.width > 0);
 
-    let sprite_width = if THIS_SPR_DOUBLE {
+    let sprite_width = if DOUBLE {
         sprite.width << 1
     } else {
         sprite.width
@@ -428,15 +430,15 @@ fn handle_sprite<
     let offset = (8 - (sprite.x & 0x7i16)) as usize;
 
     let mut offset_y = y - sprite.y;
-    if THIS_SPR_FLIP_Y {
+    if FLIP_Y {
         offset_y = sprite_width as i16 - offset_y - 1;
     }
-    if THIS_SPR_DOUBLE {
+    if DOUBLE {
         offset_y >>= 1;
     }
     let offset_y = offset_y as usize;
 
-    let mut x_pos = if THIS_SPR_FLIP_X {
+    let mut x_pos = if FLIP_X {
         -8
     } else {
         sprite.width as isize
@@ -450,7 +452,7 @@ fn handle_sprite<
 
     let mut x = end_x;
     while x >= start_x {
-        x_pos = if THIS_SPR_FLIP_X {
+        x_pos = if FLIP_X {
             x_pos + 8
         } else {
             x_pos - 8
@@ -458,8 +460,8 @@ fn handle_sprite<
 
         spr_2 = spr_1;
 
-        spr_1 = if (THIS_SPR_FLIP_X && x_pos >= sprite.width as isize)
-            || (!THIS_SPR_FLIP_X && x_pos < 0)
+        spr_1 = if (FLIP_X && x_pos >= sprite.width as isize)
+            || (!FLIP_X && x_pos < 0)
         {
             // q5
             u16x8::splat(0)
@@ -468,26 +470,27 @@ fn handle_sprite<
                 [(x_pos as usize >> 3) + sprite.graphics_x as usize]
         };
 
-        if THIS_SPR_DOUBLE {
+        if DOUBLE {
             let mut spr_1_high;
             (spr_1, spr_1_high) = spr_1.interleave(spr_1);
 
-            if THIS_SPR_FLIP_X {
+            if FLIP_X {
                 (spr_1_high, spr_1) = (spr_1.reverse(), spr_1_high.reverse());
             }
 
             if x >= 0 && x < 30 {
                 let mut spr_col = swimzleoo(spr_1_high, spr_2, offset); // q4
 
-                if THIS_SPR_C_MATH {
+                if CMATH {
                     spr_col |= u16x8::splat(0x8000);
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1[x as usize],
-                    window_2[x as usize],
-                    &mut main_col[x as usize],
-                    &mut sub_col[x as usize],
+                    window_1,
+                    window_2,
+                    main_col,
+                    sub_col,
+                    x as usize,
                     spr_col,
                 );
             }
@@ -496,36 +499,38 @@ fn handle_sprite<
             if x >= 0 && x < 30 {
                 let mut spr_col = swimzleoo(spr_1, spr_1_high, offset); // q4
 
-                if THIS_SPR_C_MATH {
+                if CMATH {
                     spr_col |= u16x8::splat(0x8000);
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1[x as usize],
-                    window_2[x as usize],
-                    &mut main_col[x as usize],
-                    &mut sub_col[x as usize],
+                    window_1,
+                    window_2,
+                    main_col,
+                    sub_col,
+                    x as usize,
                     spr_col,
                 );
             }
             x -= 1;
         } else {
-            if THIS_SPR_FLIP_X {
+            if FLIP_X {
                 spr_1 = spr_1.reverse();
             }
 
             if x >= 0 && x < 30 {
                 let mut spr_col = swimzleoo(spr_1, spr_2, offset); // q4
 
-                if THIS_SPR_C_MATH {
+                if CMATH {
                     spr_col |= u16x8::splat(0x8000);
                 }
 
                 select_correct_handle_window(sprite.windows)(
-                    window_1[x as usize],
-                    window_2[x as usize],
-                    &mut main_col[x as usize],
-                    &mut sub_col[x as usize],
+                    window_1,
+                    window_2,
+                    main_col,
+                    sub_col,
+                    x as usize,
                     spr_col,
                 );
             }
@@ -812,17 +817,19 @@ impl SASPPU {
                 scanline[x] = u16x8::splat(0);
                 sub_screen[x] = u16x8::splat(0);
                 handle_bgcol_sub_window(
-                    window_1_cache[x],
-                    window_2_cache[x],
-                    &mut scanline[x],
-                    &mut sub_screen[x],
+                    &window_1_cache,
+                    &window_2_cache,
+                    scanline,
+                    &mut sub_screen,
+                    x,
                     u16x8::splat(self.main_state.subscreen_colour),
                 );
                 handle_bgcol_main_window(
-                    window_1_cache[x],
-                    window_2_cache[x],
-                    &mut scanline[x],
-                    &mut sub_screen[x],
+                    &window_1_cache,
+                    &window_2_cache,
+                    scanline,
+                    &mut sub_screen,
+                    x,
                     u16x8::splat(self.main_state.mainscreen_colour),
                 );
             }
