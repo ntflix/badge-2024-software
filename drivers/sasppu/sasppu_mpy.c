@@ -89,6 +89,8 @@ static const mp_rom_map_elem_t sasppu_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_draw_text_background), MP_ROM_PTR(&sasppu_draw_text_background_obj)},
     {MP_ROM_QSTR(MP_QSTR_draw_text_next_background), MP_ROM_PTR(&sasppu_draw_text_next_background_obj)},
 
+    {MP_ROM_QSTR(MP_QSTR_get_text_size_obj), MP_ROM_PTR(&sasppu_get_text_size_obj)},
+
     {MP_ROM_QSTR(MP_QSTR_mul_rgb555), MP_ROM_PTR(&sasppu_macro_mul_rgb555_obj)},
     {MP_ROM_QSTR(MP_QSTR_cmath), MP_ROM_PTR(&sasppu_macro_cmath_obj)},
     {MP_ROM_QSTR(MP_QSTR_rgb555), MP_ROM_PTR(&sasppu_macro_rgb555_obj)},

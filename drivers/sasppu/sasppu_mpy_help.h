@@ -38,6 +38,8 @@ extern const mp_obj_fun_builtin_var_t sasppu_compressed_background_transparent_o
 extern const mp_obj_fun_builtin_var_t sasppu_draw_text_background_obj;
 extern const mp_obj_fun_builtin_var_t sasppu_draw_text_next_background_obj;
 
+extern const mp_obj_fun_builtin_var_t sasppu_get_text_size_obj;
+
 extern const mp_obj_fun_builtin_var_t sasppu_macro_mul_rgb555_obj;
 extern const mp_obj_fun_builtin_fixed_t sasppu_macro_cmath_obj;
 extern const mp_obj_fun_builtin_fixed_t sasppu_macro_rgb555_obj;

@@ -268,6 +268,76 @@ static inline SASPPUImageCode SASPPU_draw_text(size_t x, size_t y, uint16_t colo
     return res;
 }
 
+void SASPPU_get_text_size(size_t *width, size_t *height, size_t line_width, size_t newline_height, bool double_size, const char **text)
+{
+    *width = 0;
+    *height = 0;
+    size_t x = 0;
+    while (1)
+    {
+        char next_char = *((*text)++);
+        if (next_char == 0)
+        {
+            if (double_size)
+            {
+                *height += 10;
+            }
+            else
+            {
+                *height += 10;
+            }
+            return;
+        }
+        if (next_char == '\n')
+        {
+            x = 0;
+            if (double_size)
+            {
+                *height += newline_height * 2;
+            }
+            else
+            {
+                *height += newline_height;
+            }
+            continue;
+        }
+        if ((next_char < 0x20) || (next_char == 127))
+        {
+            continue;
+        }
+
+        if (x != 0)
+        {
+            if (x >= line_width)
+            {
+                x = 0;
+                if (double_size)
+                {
+                    *height += newline_height * 2;
+                }
+                else
+                {
+                    *height += newline_height;
+                }
+            }
+        }
+
+        CharacterData data = CHARACTER_DATA[next_char - 0x20];
+        if (double_size)
+        {
+            x += data.width * 2;
+        }
+        else
+        {
+            x += data.width;
+        }
+        if (x > *width)
+        {
+            *width = x;
+        }
+    }
+}
+
 SASPPUImageCode SASPPU_copy_sprite(size_t dst_x, size_t dst_y, size_t width, size_t height, size_t src_x, size_t src_y, bool double_size)
 {
     return SASPPU_copy(dst_x, dst_y, width, height, src_x, src_y, double_size, (uint16_t *)SASPPU_sprites, SPR_WIDTH, SPR_HEIGHT, false);

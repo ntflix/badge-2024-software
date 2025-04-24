@@ -61,7 +61,7 @@ static mp_obj_t sasppu_draw_text_sprite(size_t n_args, const mp_obj_t *args)
     GET_STR_DATA_LEN(args[4], text, text_len);
     mp_int_t newline_height = 10;
     bool double_size = false;
-    if (n_args == 6)
+    if (n_args >= 6)
     {
         double_size = mp_obj_is_true(args[5]);
     }
@@ -86,7 +86,7 @@ static mp_obj_t sasppu_draw_text_next_sprite(size_t n_args, const mp_obj_t *args
     GET_STR_DATA_LEN(args[5], text, text_len);
     mp_int_t newline_height = 10;
     bool double_size = false;
-    if (n_args == 7)
+    if (n_args >= 7)
     {
         double_size = mp_obj_is_true(args[6]);
     }
@@ -123,7 +123,7 @@ static mp_obj_t sasppu_blit_sprite(size_t n_args, const mp_obj_t *args)
     return MP_OBJ_NEW_SMALL_INT(res);
 }
 
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_blit_sprite_obj, 5, 7, sasppu_blit_sprite);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_blit_sprite_obj, 5, 6, sasppu_blit_sprite);
 
 static mp_obj_t sasppu_blit_sprite_transparent(size_t n_args, const mp_obj_t *args)
 {
@@ -366,7 +366,7 @@ static mp_obj_t sasppu_draw_text_background(size_t n_args, const mp_obj_t *args)
     GET_STR_DATA_LEN(args[4], text, text_len);
     mp_int_t newline_height = 10;
     bool double_size = false;
-    if (n_args == 6)
+    if (n_args >= 6)
     {
         double_size = mp_obj_is_true(args[5]);
     }
@@ -391,11 +391,11 @@ static mp_obj_t sasppu_draw_text_next_background(size_t n_args, const mp_obj_t *
     GET_STR_DATA_LEN(args[5], text, text_len);
     mp_int_t newline_height = 10;
     bool double_size = false;
-    if (n_args == 6)
+    if (n_args >= 7)
     {
         double_size = mp_obj_is_true(args[6]);
     }
-    if (n_args == 7)
+    if (n_args == 8)
     {
         newline_height = mp_obj_get_int(args[7]);
     }
@@ -428,7 +428,7 @@ static mp_obj_t sasppu_blit_background(size_t n_args, const mp_obj_t *args)
     return MP_OBJ_NEW_SMALL_INT(res);
 }
 
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_blit_background_obj, 5, 7, sasppu_blit_background);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_blit_background_obj, 5, 6, sasppu_blit_background);
 
 static mp_obj_t sasppu_blit_background_transparent(size_t n_args, const mp_obj_t *args)
 {
@@ -609,6 +609,30 @@ static mp_obj_t sasppu_compressed_background_transparent(size_t n_args, const mp
 }
 
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_compressed_background_transparent_obj, 7, 8, sasppu_compressed_background_transparent);
+
+static mp_obj_t sasppu_get_text_size(size_t n_args, const mp_obj_t *args)
+{
+    mp_int_t line_width = mp_obj_get_int(args[0]);
+    mp_check_self(mp_obj_is_str_or_bytes(args[1]));
+    GET_STR_DATA_LEN(args[1], text, text_len);
+    mp_int_t newline_height = 10;
+    bool double_size = false;
+    if (n_args >= 3)
+    {
+        double_size = mp_obj_is_true(args[2]);
+    }
+    if (n_args == 4)
+    {
+        newline_height = mp_obj_get_int(args[3]);
+    }
+    size_t width;
+    size_t height;
+    SASPPU_get_text_size(&width, &height, line_width, newline_height, double_size, (const char *)text);
+    mp_obj_t tuple_args[2] = {MP_OBJ_NEW_SMALL_INT(width), MP_OBJ_NEW_SMALL_INT(height)};
+    return mp_obj_new_tuple(2, tuple_args);
+}
+
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sasppu_get_text_size_obj, 2, 4, sasppu_get_text_size);
 
 static mp_obj_t sasppu_macro_cmath(mp_obj_t col) {
     mp_int_t val = mp_obj_get_int(col);
