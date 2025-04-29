@@ -266,5 +266,5 @@ class HexpansionManagerApp(app.App):
                         hexpansion_plugin_states[i] = False
                         eventbus.emit(HexpansionRemovalEvent(port=i + 1))
 
-                tildagonos.write_leds()
+                tildagonos.leds.write()
             await asyncio.sleep(0.05)
