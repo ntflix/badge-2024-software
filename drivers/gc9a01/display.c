@@ -16,8 +16,7 @@ static float smoothed_fps = 0.0f;
 
 static st3m_counter_rate_t rast_rate;
 
-static inline void gfx_fps_update(void)
-{
+static inline void gfx_fps_update(void) {
     st3m_counter_rate_sample(&rast_rate);
     float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
     smoothed_fps = smoothed_fps * 0.6 + 0.4 * rate;
@@ -25,10 +24,8 @@ static inline void gfx_fps_update(void)
 
 static bool gfx_inited = false;
 
-static mp_obj_t gfx_init()
-{
-    if (!gfx_inited)
-    {
+static mp_obj_t gfx_init() {
+    if (!gfx_inited) {
         st3m_counter_rate_init(&rast_rate);
         flow3r_bsp_display_init();
         gfx_inited = true;
@@ -37,28 +34,25 @@ static mp_obj_t gfx_init()
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(gfx_init_obj, gfx_init);
 
-static mp_obj_t get_fps()
-{
+static mp_obj_t get_fps() {
     return mp_obj_new_float(smoothed_fps);
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(get_fps_obj, get_fps);
 
-#define TILDAGON_DISPLAY_WIDTH 240
+#define TILDAGON_DISPLAY_WIDTH  240
 #define TILDAGON_DISPLAY_HEIGHT 240
 
 static uint8_t tildagon_fb[TILDAGON_DISPLAY_WIDTH * TILDAGON_DISPLAY_HEIGHT * 2] __attribute__((aligned(16)));
 static Ctx *tildagon_ctx = NULL;
 
-typedef enum
-{
+typedef enum {
     FB_INVALID,
     FB_RENDERED,
     FB_DISPLAYED,
 } FramebufferState;
 static FramebufferState fb_sect_state[4] = {FB_INVALID, FB_INVALID, FB_INVALID, FB_INVALID};
 
-static portTASK_FUNCTION(vADisplayFlip, pvParameters)
-{
+static portTASK_FUNCTION(vADisplayFlip, pvParameters) {
     for (;;)
     {
         for (int i = 0; i < 4; i++)
@@ -81,8 +75,7 @@ static portTASK_FUNCTION(vADisplayFlip, pvParameters)
 
 TaskHandle_t display_flip_task = NULL;
 
-static mp_obj_t start_display_flip_task()
-{
+static mp_obj_t start_display_flip_task() {
     xTaskCreatePinnedToCore(vADisplayFlip,
                             "DisplayFlip",
                             2048,
@@ -94,8 +87,7 @@ static mp_obj_t start_display_flip_task()
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(start_display_flip_task_obj, start_display_flip_task);
 
-static inline Ctx *tildagon_gfx_ctx(void)
-{
+static inline Ctx *tildagon_gfx_ctx(void) {
     if (tildagon_ctx == NULL)
     {
         tildagon_ctx = ctx_new_for_framebuffer(tildagon_fb, TILDAGON_DISPLAY_WIDTH, TILDAGON_DISPLAY_HEIGHT, TILDAGON_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
@@ -103,8 +95,7 @@ static inline Ctx *tildagon_gfx_ctx(void)
     return tildagon_ctx;
 }
 
-static inline void tildagon_start_frame(Ctx *ctx)
-{
+static inline void tildagon_start_frame(Ctx *ctx) {
     int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
     int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
 
@@ -113,15 +104,13 @@ static inline void tildagon_start_frame(Ctx *ctx)
     ctx_apply_transform(ctx, 1.0f, 0.0f, offset_x, 0.0f, 1.0f, offset_y, 0.0f, 0.0f, 1.0f);
 }
 
-static mp_obj_t section_ready(mp_obj_t section)
-{
+static mp_obj_t section_ready(mp_obj_t section) {
     mp_uint_t i = mp_obj_int_get_uint_checked(section);
     return fb_sect_state[i] == FB_INVALID ? mp_const_true : mp_const_false;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(section_ready_obj, section_ready);
 
-static mp_obj_t all_sections_ready()
-{
+static mp_obj_t all_sections_ready() {
     return (fb_sect_state[0] == FB_INVALID) &&
                    (fb_sect_state[1] == FB_INVALID) &&
                    (fb_sect_state[2] == FB_INVALID) &&
@@ -131,8 +120,7 @@ static mp_obj_t all_sections_ready()
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(all_sections_ready_obj, all_sections_ready);
 
-static mp_obj_t start_frame()
-{
+static mp_obj_t start_frame() {
     Ctx *ctx = tildagon_gfx_ctx();
     assert(ctx);
     tildagon_start_frame(ctx);
@@ -140,8 +128,7 @@ static mp_obj_t start_frame()
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(start_frame_obj, start_frame);
 
-static inline void tildagon_end_frame(Ctx *ctx)
-{
+static inline void tildagon_end_frame(Ctx *ctx) {
     ctx_restore(ctx);
     fb_sect_state[0] = FB_RENDERED;
     fb_sect_state[1] = FB_RENDERED;
@@ -154,16 +141,14 @@ static inline void tildagon_end_frame(Ctx *ctx)
     gfx_fps_update();
 }
 
-static mp_obj_t end_frame(mp_obj_t ctx)
-{
+static mp_obj_t end_frame(mp_obj_t ctx) {
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(ctx);
     tildagon_end_frame(self->ctx);
     return ctx;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(end_frame_obj, end_frame);
 
-static mp_obj_t flip_sasppu_section(mp_obj_t section)
-{
+static mp_obj_t flip_sasppu_section(mp_obj_t section) {
     mp_uint_t i = mp_obj_int_get_uint_checked(section);
     // int64_t then = esp_timer_get_time();
     SASPPU_render((uint16x8_t *)(tildagon_fb), i);
@@ -182,8 +167,7 @@ static mp_obj_t flip_sasppu_section(mp_obj_t section)
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(flip_sasppu_section_obj, flip_sasppu_section);
 
-static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args)
-{
+static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args) {
     // Draw a regular hexagon in a context and return the context
     mp_ctx_obj_t *ctx = MP_OBJ_TO_PTR(args[0]);
     float x = mp_obj_get_float(args[1]);
@@ -228,21 +212,21 @@ static mp_obj_t hexagon(size_t n_args, const mp_obj_t *args)
 static MP_DEFINE_CONST_FUN_OBJ_VAR(hexagon_obj, 4, hexagon);
 
 static const mp_rom_map_elem_t display_module_globals_table[] = {
-    {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_display)},
-    {MP_ROM_QSTR(MP_QSTR_gfx_init), MP_ROM_PTR(&gfx_init_obj)},
-    {MP_ROM_QSTR(MP_QSTR_get_fps), MP_ROM_PTR(&get_fps_obj)},
-    {MP_ROM_QSTR(MP_QSTR_start_frame), MP_ROM_PTR(&start_frame_obj)},
-    {MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj)},
-    {MP_ROM_QSTR(MP_QSTR_flip_sasppu_section), MP_ROM_PTR(&flip_sasppu_section_obj)},
-    {MP_ROM_QSTR(MP_QSTR_start_display_flip_task), MP_ROM_PTR(&start_display_flip_task_obj)},
-    {MP_ROM_QSTR(MP_QSTR_section_ready), MP_ROM_PTR(&section_ready_obj)},
-    {MP_ROM_QSTR(MP_QSTR_all_sections_ready), MP_ROM_PTR(&all_sections_ready_obj)},
-    {MP_ROM_QSTR(MP_QSTR_hexagon), MP_ROM_PTR(&hexagon_obj)},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_display) },
+    { MP_ROM_QSTR(MP_QSTR_gfx_init), MP_ROM_PTR(&gfx_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_fps), MP_ROM_PTR(&get_fps_obj) },
+    { MP_ROM_QSTR(MP_QSTR_start_frame), MP_ROM_PTR(&start_frame_obj) },
+    { MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj) },
+    { MP_ROM_QSTR(MP_QSTR_flip_sasppu_section), MP_ROM_PTR(&flip_sasppu_section_obj) },
+    { MP_ROM_QSTR(MP_QSTR_start_display_flip_task), MP_ROM_PTR(&start_display_flip_task_obj) },
+    { MP_ROM_QSTR(MP_QSTR_section_ready), MP_ROM_PTR(&section_ready_obj) },
+    { MP_ROM_QSTR(MP_QSTR_all_sections_ready), MP_ROM_PTR(&all_sections_ready_obj) },
+    { MP_ROM_QSTR(MP_QSTR_hexagon), MP_ROM_PTR(&hexagon_obj) },
 };
 static MP_DEFINE_CONST_DICT(display_module_globals, display_module_globals_table);
 
 const mp_obj_module_t display_user_module = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&display_module_globals,
 };
 
