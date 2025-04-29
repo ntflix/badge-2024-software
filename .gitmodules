@@ -1,3 +1,9 @@
 [submodule "micropython"]
 	path = micropython
 	url = https://github.com/micropython/micropython.git
+[submodule "components/sasppu"]
+	path = components/sasppu
+	url = https://github.com/analogue-stick/sasppu.git
+[submodule "drivers/sasppu"]
+	path = drivers/sasppu
+	url = https://github.com/analogue-stick/sasppu-mpy.git
