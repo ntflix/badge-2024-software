@@ -3,7 +3,6 @@
 #include "flow3r_bsp.h"
 #include "mp_uctx.h"
 #include "sasppu/sasppu.h"
-#include "display.h"
 #include <math.h>
 
 #include "esp_timer.h"
